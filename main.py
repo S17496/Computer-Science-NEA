@@ -11,7 +11,10 @@ pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
-world = [[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,0,0,0,1,1,0],[0,1,0,1,0,0,0,1,0,0],[1,1,1,1,1,1,1,1,1,1]]
+world = [[0,0,0,0,0,0,0,0,0,0],
+         [0,0,1,1,0,0,0,1,0,0],
+         [0,1,1,1,1,0,1,1,1,0],
+         [1,1,1,1,1,1,1,1,1,1]]
 
 class Player(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -44,18 +47,37 @@ class Player(pygame.sprite.Sprite):
             self.on_ground = False
         self.vel_y += self.gravity 
 
-        #Apply movement
+        #Apply horizontal movement
         self.rect.x += self.vel_x 
+        for tile in tiles:
+            if self.rect.colliderect(tile):
+                if self.vel_x > 0:
+                    self.rect.right = tile.left
+                elif self.vel_x < 0:
+                    self.rect.left = tile.right  
+
+        #Apply vertical movement
         self.rect.y += self.vel_y
+        self.on_ground = False
+        for tile in tiles:
+            if self.rect.colliderect(tile):
+                if self.vel_y > 0:
+                    self.rect.bottom = tile.top
+                    self.vel_y = 0
+                    self.on_ground = True
+                elif self.vel_y < 0:
+                    self.rect.top = tile.bottom
+                    self.vel_y = 0
+                                
 
         # Temporary ground collision (flat floor at y=900)
-        if self.rect.bottom >= 900:
-            self.rect.bottom = 900
+        if self.rect.bottom >= 128*4:
+            self.rect.bottom = 128*4
             self.vel_y = 0
             self.on_ground = True
 
 
-player1 = Player(500, 500)
+player1 = Player(0, 0)
 
 tiles = []
 for row_index, row in enumerate(world):
@@ -82,7 +104,7 @@ while running:
     screen.fill((0,0,150))
 
     for tile in tiles:
-            pygame.draw.rect(screen,(100,200,100),(tile.x - camera_x,tile.y - camera_y, TILE_SIZE, TILE_SIZE))
+            pygame.draw.rect(screen,(100,200,100),(tile.x - camera_x, tile.y - camera_y, TILE_SIZE, TILE_SIZE))
     
     
 
