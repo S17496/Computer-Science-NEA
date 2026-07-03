@@ -19,62 +19,74 @@ world = [[0,0,0,0,0,0,0,0,0,0],
 class Player(pygame.sprite.Sprite):
     def __init__(self,x,y):
         super().__init__()
-        self.image = pygame.Surface((40, 60))
-        self.image.fill((255, 200, 0))
-        self.rect = self.image.get_rect(topleft=(x, y))
+        self.__image = pygame.Surface((40, 60))
+        self.__image.fill((255, 200, 0))
+        self.__rect = self.__image.get_rect(topleft=(x, y))
 
         #Movement
-        self.vel_x = 0
-        self.vel_y = 0
-        self.speed = 5
-        self.gravity = 0.4
-        self.jump_strength = -12
-        self.on_ground = False
+        self.__vel_x = 0
+        self.__vel_y = 0
+        self.__speed = 5
+        self.__gravity = 0.4
+        self.__jump_strength = -12
+        self.__on_ground = False
 
     def update(self):
         keys = pygame.key.get_pressed()
 
         #Horizontal movement
-        self.vel_x = 0
+        self.__vel_x = 0
         if keys[pygame.K_a]:
-            self.vel_x = -self.speed
+            self.__vel_x = -self.__speed
         if keys[pygame.K_d]:
-            self.vel_x = self.speed
+            self.__vel_x = self.__speed
 
         #Vertical movement
-        if keys[pygame.K_SPACE] and self.on_ground:
-            self.vel_y = self.jump_strength
-            self.on_ground = False
-        self.vel_y += self.gravity 
+        if keys[pygame.K_SPACE] and self.__on_ground:
+            self.__vel_y = self.__jump_strength
+            self.__on_ground = False
+        self.__vel_y += self.__gravity 
 
         #Apply horizontal movement
-        self.rect.x += self.vel_x 
+        self.__rect.x += self.__vel_x 
         for tile in tiles:
-            if self.rect.colliderect(tile):
-                if self.vel_x > 0:
-                    self.rect.right = tile.left
-                elif self.vel_x < 0:
-                    self.rect.left = tile.right  
+            if self.__rect.colliderect(tile):
+                if self.__vel_x > 0:
+                    self.__rect.right = tile.left
+                elif self.__vel_x < 0:
+                    self.__rect.left = tile.right  
 
         #Apply vertical movement
-        self.rect.y += self.vel_y
-        self.on_ground = False
+        self.__rect.y += self.__vel_y
+        self.__on_ground = False
         for tile in tiles:
-            if self.rect.colliderect(tile):
-                if self.vel_y > 0:
-                    self.rect.bottom = tile.top
-                    self.vel_y = 0
-                    self.on_ground = True
-                elif self.vel_y < 0:
-                    self.rect.top = tile.bottom
-                    self.vel_y = 0
+            if self.__rect.colliderect(tile):
+                if self.__vel_y > 0:
+                    self.__rect.bottom = tile.top
+                    self.__vel_y = 0
+                    self.__on_ground = True
+                elif self.__vel_y < 0:
+                    self.__rect.top = tile.bottom
+                    self.__vel_y = 0
                                 
 
         # Temporary ground collision (flat floor at y=900)
-        if self.rect.bottom >= 128*4:
-            self.rect.bottom = 128*4
-            self.vel_y = 0
-            self.on_ground = True
+        if self.__rect.bottom >= 128*4:
+            self.__rect.bottom = 128*4
+            self.__vel_y = 0
+            self.__on_ground = True
+
+    def get_position(self):
+        return (self.__rect.centerx, self.__rect.centery)
+
+    def get_image(self):
+            return self.__image
+    
+
+class Tile(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pass
+
 
 
 player1 = Player(0, 0)
@@ -93,13 +105,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+    
     
     player1.update()
 
 
-    camera_x = player1.rect.centerx - SCREEN_WIDTH//2
-    camera_y = player1.rect.centery - SCREEN_HEIGHT//2
+    camera_x = player1.get_position()[0] - SCREEN_WIDTH//2
+    camera_y = player1.get_position()[1] - SCREEN_HEIGHT//2
 
     screen.fill((0,0,150))
 
@@ -113,7 +125,7 @@ while running:
 
 
 
-    screen.blit(player1.image, (player1.rect.x - camera_x, player1.rect.y - camera_y))
+    screen.blit(player1.get_image(), (player1.get_position()[0] - camera_x, player1.get_position()[1] - camera_y))
    
     pygame.display.update()
     # 60 FPS
