@@ -20,9 +20,9 @@ class Player(pygame.sprite.Sprite):
     #Constructor
     def __init__(self,x,y):
         super().__init__()
-        self.__image = pygame.Surface((40, 60))
-        self.__image.fill((255, 200, 0))
-        self.__rect = self.__image.get_rect(topleft=(x, y))
+        self.image = pygame.Surface((40, 60))
+        self.image.fill((255, 200, 0))
+        self.rect = self.image.get_rect(topleft=(x, y))
 
         #Movement
         self.__vel_x = 0
@@ -45,44 +45,35 @@ class Player(pygame.sprite.Sprite):
         #Vertical movement
         if keys[pygame.K_SPACE] and self.__on_ground:
             self.__vel_y = self.__jump_strength
-            self.__on_ground = False
         self.__vel_y += self.__gravity
         self.__on_ground = False
 
         #Apply horizontal movement
-        self.__rect.x += self.__vel_x 
+        self.rect.x += self.__vel_x 
 
         #Horizontal collisions
         for tile in tiles:
-            if self.__rect.colliderect(tile):
+            if self.rect.colliderect(tile):
                 if self.__vel_x > 0:
-                    self.__rect.right = tile.left
+                    self.rect.right = tile.left
                 elif self.__vel_x < 0:
-                    self.__rect.left = tile.right  
+                    self.rect.left = tile.right  
 
         #Apply vertical movement
-        self.__rect.y += self.__vel_y
+        self.rect.y += self.__vel_y
         
         #Vertical collisions
         for tile in tiles:
-            if self.__rect.colliderect(tile):
+            if self.rect.colliderect(tile):
                 if self.__vel_y > 0:
-                    self.__rect.bottom = tile.top
+                    self.rect.bottom = tile.top
                     self.__vel_y = 0
                     self.__on_ground = True
                 elif self.__vel_y < 0:
-                    self.__rect.top = tile.bottom
+                    self.rect.top = tile.bottom
                     self.__vel_y = 0
                                 
         
-        # Getters
-    def get_rect(self):
-        return self.__rect
-
-    def get_image(self):
-            return self.__image
-    
-
 class Tile(pygame.sprite.Sprite):
     def __init__(self,x,y):
         super().__init__()
@@ -109,9 +100,8 @@ while running:
     
     player1.update()
 
-    player_rect = player1.get_rect()
-    camera_x = player_rect.centerx - SCREEN_WIDTH//2
-    camera_y = player_rect.centery - SCREEN_HEIGHT//2
+    camera_x = player1.rect.centerx - SCREEN_WIDTH//2
+    camera_y = player1.rect.centery - SCREEN_HEIGHT//2
 
     screen.fill((0,0,150))
 
@@ -119,7 +109,7 @@ while running:
             pygame.draw.rect(screen,(100,200,100),(tile.x - camera_x, tile.y - camera_y, TILE_SIZE, TILE_SIZE))
     
     
-    screen.blit(player1.get_image(), (player_rect.x - camera_x, player_rect.y - camera_y))
+    screen.blit(player1.image, (player1.rect.x - camera_x, player1.rect.y - camera_y))
    
     pygame.display.update()
     # 60 FPS
