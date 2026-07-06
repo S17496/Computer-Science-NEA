@@ -74,12 +74,6 @@ class Player(pygame.sprite.Sprite):
                     self.__rect.top = tile.bottom
                     self.__vel_y = 0
                                 
-
-        # Temporary ground collision (flat floor at y=900)
-        if self.__rect.bottom >= 128*4:
-            self.__rect.bottom = 128*4
-            self.__vel_y = 0
-            self.__on_ground = True
         
         # Getters
     def get_rect(self):
