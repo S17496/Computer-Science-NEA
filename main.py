@@ -17,14 +17,14 @@ world = [[0,0,0,0,0,0,0,0,0,0],
          [1,1,1,1,1,1,1,1,1,1]]
 
 class Player(pygame.sprite.Sprite):
-    #Constructor
+    # Constructor
     def __init__(self,x,y):
         super().__init__()
         self.image = pygame.Surface((40, 60))
         self.image.fill((255, 200, 0))
         self.rect = self.image.get_rect(topleft=(x, y))
 
-        #Movement
+        # Movement
         self.__vel_x = 0
         self.__vel_y = 0
         self.__speed = 5
@@ -32,10 +32,10 @@ class Player(pygame.sprite.Sprite):
         self.__jump_strength = -12
         self.__on_ground = False
 
-    def update(self):
+    def update(self, tiles):
         keys = pygame.key.get_pressed()
 
-        #Horizontal movement
+        # Horizontal movement
         self.__vel_x = 0
         if keys[pygame.K_a]:
             self.__vel_x = -self.__speed
@@ -48,46 +48,49 @@ class Player(pygame.sprite.Sprite):
         self.__vel_y += self.__gravity
         self.__on_ground = False
 
-        #Apply horizontal movement
+        # Apply horizontal movement
         self.rect.x += self.__vel_x 
 
-        #Horizontal collisions
+        # Horizontal collisions
         for tile in tiles:
-            if self.rect.colliderect(tile):
+            if self.rect.colliderect(tile.rect):
                 if self.__vel_x > 0:
-                    self.rect.right = tile.left
+                    self.rect.right = tile.rect.left
                 elif self.__vel_x < 0:
-                    self.rect.left = tile.right  
+                    self.rect.left = tile.rect.right  
 
-        #Apply vertical movement
+        # Apply vertical movement
         self.rect.y += self.__vel_y
         
-        #Vertical collisions
+        # Vertical collisions
         for tile in tiles:
-            if self.rect.colliderect(tile):
+            if self.rect.colliderect(tile.rect):
                 if self.__vel_y > 0:
-                    self.rect.bottom = tile.top
+                    self.rect.bottom = tile.rect.top
                     self.__vel_y = 0
                     self.__on_ground = True
                 elif self.__vel_y < 0:
-                    self.rect.top = tile.bottom
+                    self.rect.top = tile.rect.bottom
                     self.__vel_y = 0
                                 
         
 class Tile(pygame.sprite.Sprite):
+    # Constructor
     def __init__(self,x,y):
         super().__init__()
+        self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
+        self.image.fill((100, 200, 100))
+        self.rect = self.image.get_rect(topleft=(x,y))
 
 
 
 player1 = Player(0, 0)
 
-tiles = []
+tile_group = pygame.sprite.Group()
 for row_index, row in enumerate(world):
     for col_index, tile in enumerate(row):
         if tile == 1:
-            rect = pygame.Rect(col_index * TILE_SIZE, row_index * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            tiles.append(rect)
+            tile_group.add(Tile(col_index * TILE_SIZE, row_index * TILE_SIZE))
 
 
 
@@ -98,15 +101,15 @@ while running:
             running = False
     
     
-    player1.update()
+    player1.update(tile_group)
 
     camera_x = player1.rect.centerx - SCREEN_WIDTH//2
     camera_y = player1.rect.centery - SCREEN_HEIGHT//2
 
     screen.fill((0,0,150))
 
-    for tile in tiles:
-            pygame.draw.rect(screen,(100,200,100),(tile.x - camera_x, tile.y - camera_y, TILE_SIZE, TILE_SIZE))
+    for tile in tile_group:
+        screen.blit(tile.image, (tile.rect.x - camera_x, tile.rect.y - camera_y))
     
     
     screen.blit(player1.image, (player1.rect.x - camera_x, player1.rect.y - camera_y))
