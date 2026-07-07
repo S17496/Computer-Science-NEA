@@ -1,17 +1,13 @@
 import pygame
-
-# Constants
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
-TILE_SIZE = 128
-
+import config_file as c
+import world_file as w
 
 # Pygame Initialisations
 pygame.init()
-screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
+screen = pygame.display.set_mode((c.SCREEN_WIDTH,c.SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
-world = [[0,0,0,0,0,0,0,0,0,0],
+world_list = [[0,0,0,0,0,0,0,0,0,0],
          [0,0,1,1,0,0,0,1,0,0],
          [0,1,1,1,1,0,1,1,1,0],
          [1,1,1,1,1,1,1,1,1,1]]
@@ -20,6 +16,8 @@ class Player(pygame.sprite.Sprite):
     # Constructor
     def __init__(self,x,y):
         super().__init__()
+
+        # Pygame convention for sprites. Attributes kept public.
         self.image = pygame.Surface((40, 60))
         self.image.fill((255, 200, 0))
         self.rect = self.image.get_rect(topleft=(x, y))
@@ -73,24 +71,10 @@ class Player(pygame.sprite.Sprite):
                     self.rect.top = tile.rect.bottom
                     self.__vel_y = 0
                                 
-class Tile(pygame.sprite.Sprite):
-    # Constructor
-    def __init__(self,x,y):
-        super().__init__()
-        self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
-        self.image.fill((100, 200, 100))
-        self.rect = self.image.get_rect(topleft=(x,y))
-
 
 
 player1 = Player(0, 0)
-
-tile_group = pygame.sprite.Group()
-for row_index, row in enumerate(world):
-    for col_index, tile in enumerate(row):
-        if tile == 1:
-            tile_group.add(Tile(col_index * TILE_SIZE, row_index * TILE_SIZE))
-
+world_obj = w.World(world_list)
 
 camera_x = 0
 camera_y = 0
@@ -101,18 +85,18 @@ while running:
             running = False
     
     
-    player1.update(tile_group)
+    player1.update(world_obj.tile_group)
     
 
 
-    target_x = player1.rect.centerx - SCREEN_WIDTH//2
-    target_y = player1.rect.centery - SCREEN_HEIGHT//2
+    target_x = player1.rect.centerx - c.SCREEN_WIDTH//2
+    target_y = player1.rect.centery - c.SCREEN_HEIGHT//2
     camera_x += (target_x - camera_x) * 0.1
     camera_y += (target_y - camera_y) * 0.1
 
     screen.fill((0,0,150))
 
-    for tile in tile_group:
+    for tile in world_obj.tile_group:
         screen.blit(tile.image, (tile.rect.x - camera_x, tile.rect.y - camera_y))
     
     
