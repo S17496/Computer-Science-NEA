@@ -73,7 +73,6 @@ class Player(pygame.sprite.Sprite):
                     self.rect.top = tile.rect.bottom
                     self.__vel_y = 0
                                 
-        
 class Tile(pygame.sprite.Sprite):
     # Constructor
     def __init__(self,x,y):
@@ -93,7 +92,8 @@ for row_index, row in enumerate(world):
             tile_group.add(Tile(col_index * TILE_SIZE, row_index * TILE_SIZE))
 
 
-
+camera_x = 0
+camera_y = 0
 running = True
 while running:
     for event in pygame.event.get():
@@ -102,9 +102,13 @@ while running:
     
     
     player1.update(tile_group)
+    
 
-    camera_x = player1.rect.centerx - SCREEN_WIDTH//2
-    camera_y = player1.rect.centery - SCREEN_HEIGHT//2
+
+    target_x = player1.rect.centerx - SCREEN_WIDTH//2
+    target_y = player1.rect.centery - SCREEN_HEIGHT//2
+    camera_x += (target_x - camera_x) * 0.1
+    camera_y += (target_y - camera_y) * 0.1
 
     screen.fill((0,0,150))
 
