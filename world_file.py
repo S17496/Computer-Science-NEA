@@ -29,3 +29,8 @@ class World:
                 if (i,j) in self._tile_dic:
                     nearby.append(self._tile_dic[(i,j)])
         return nearby
+
+    def break_tile(self, coordinates):
+        if coordinates in self._tile_dic:
+            broken_tile = self._tile_dic.pop(coordinates)
+            self._tile_group.remove(broken_tile)
