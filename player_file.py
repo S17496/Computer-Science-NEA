@@ -11,6 +11,9 @@ class Player(pygame.sprite.Sprite):
         self.image.fill((255, 200, 0))
         self.rect = self.image.get_rect(topleft=(x, y))
 
+        #Inventory
+        self.__inventory = {}
+
         # Movement
         self.__vel_x = 0
         self.__vel_y = 0
@@ -18,6 +21,19 @@ class Player(pygame.sprite.Sprite):
         self.__gravity = 0.4
         self.__jump_strength = -12
         self.__on_ground = False
+
+    # Getters and setters
+    def get_inventory(self):
+        return self.__inventory
+
+    def update_inventory(self, item):
+        if item in self.__inventory:
+            self.__inventory[item] += 1
+            print(self.__inventory)
+        else:
+            self.__inventory[item] = 1
+            print(self.__inventory)
+
 
     def update(self, tiles):
         keys = pygame.key.get_pressed()
