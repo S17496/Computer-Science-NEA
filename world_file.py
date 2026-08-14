@@ -1,6 +1,44 @@
 import pygame
 import config_file as c
 import tile_file as t
+import math
+
+class PerlinNoise:
+    def __init__(self, seed):
+        self.__seed = seed
+
+    def lerp(self, a, b, t):
+        return a + (b-a)*t
+
+    def get_cell_info(self, x):
+        return (math.floor(x), x - math.floor(x))
+
+    def fade(self, x):
+        return 3 * x ** 2 - 2 * x ** 3
+
+    def gradient_influence(self, gradient, distance):
+        return gradient * distance
+    
+    def get_gradient(self, x):
+        return 2 * (x % 2) - 1
+    
+    def noise(self, x):
+        cell_info = self.get_cell_info(x)
+
+        left = cell_info[0]
+        right = left + 1
+
+        distance_left = cell_info[1]
+        distance_right = distance_left - 1
+
+        left_gradient = self.get_gradient(left)
+        right_gradient = self.get_gradient(right)
+
+        left_influence = self.gradient_influence(left_gradient, distance_left)
+        right_influence = self.gradient_influence(right_gradient, distance_right)
+
+
+
 
 class World:
     # Constructor
@@ -13,13 +51,8 @@ class World:
     def load(self, world_data):
         # Create a sprite group and dictionary for tiles
         for row_index, row in enumerate(world_data):
-            for col_index, tile in enumerate(row):
-                if tile > 0:
-                    if tile == 1:
-                        tile_type = "dirt"
-                    elif tile == 2:
-                        tile_type = "stone"
-                    new_tile = t.Tile(col_index * c.TILE_SIZE, row_index * c.TILE_SIZE, tile_type)
+            for col_index, tile_id in enumerate(row):
+                    new_tile = t.Tile(col_index * c.TILE_SIZE, row_index * c.TILE_SIZE, tile_id)
                     self._tile_group.add(new_tile)
                     self._tile_dic[(col_index, row_index)] = new_tile
 
