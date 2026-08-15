@@ -11,7 +11,7 @@ class Player(pygame.sprite.Sprite):
         self.image.fill((255, 200, 0))
         self.rect = self.image.get_rect(topleft=(x, y))
 
-        #Inventory
+        # Inventory
         self.__inventory = {}
 
         # Movement
@@ -75,3 +75,21 @@ class Player(pygame.sprite.Sprite):
                 elif self.__vel_y < 0:
                     self.rect.top = tile.rect.bottom
                     self.__vel_y = 0
+
+class InventoryUI:
+    def __init__(self, font):
+        self.__font = font
+        self.__box_width = 100
+
+    def render(self, screen, inventory):
+        # Draw background box
+        background_box = pygame.Rect(200, 200, len(inventory) * (self.__box_width + 20), 100)
+        pygame.draw.rect(screen, (50, 50, 50), background_box)
+
+        # Draw items
+        x = 210
+        for item_name, count in inventory.items():
+            text = f"{item_name}: {count}"
+            text_surface = self.__font.render(text, True, (255, 255, 255))
+            screen.blit(text_surface, (x, 15))
+            x += self.__box_width + 20

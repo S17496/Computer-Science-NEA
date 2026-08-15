@@ -2,6 +2,7 @@ import pygame
 import config_file as c
 import tile_file as t
 import math
+import random
 
 class PerlinNoise:
     def __init__(self, seed):
@@ -14,13 +15,11 @@ class PerlinNoise:
         return (math.floor(x), x - math.floor(x))
 
     def fade(self, x):
-        return 3 * x ** 2 - 2 * x ** 3
+        return 6 * x ** 5 - 15 * x ** 4 + 10 * x ** 3
 
-    def gradient_influence(self, gradient, distance):
-        return gradient * distance
-    
     def get_gradient(self, x):
-        return 2 * (x % 2) - 1
+        random.seed(self.__seed + x)
+        return random.choice([1, -1])
     
     def noise(self, x):
         cell_info = self.get_cell_info(x)
@@ -34,27 +33,46 @@ class PerlinNoise:
         left_gradient = self.get_gradient(left)
         right_gradient = self.get_gradient(right)
 
-        left_influence = self.gradient_influence(left_gradient, distance_left)
-        right_influence = self.gradient_influence(right_gradient, distance_right)
+        left_influence = left_gradient * distance_left
+        right_influence = right_gradient * distance_right
+
+        fade = self.fade(distance_left)
+
+        return self.lerp(left_influence, right_influence, fade)
 
 
 
 
 class World:
     # Constructor
-    def __init__(self, world_data):
+    def __init__(self, noise1d):
         self._tile_group = pygame.sprite.Group()
         self._tile_dic = {}
-        self.load(world_data)
-    
+        self.__world_data = self.generate_world(noise1d)
+        self.load(self.__world_data)
+
+    def generate_world(self, noise1d):
+        world_data = []
+        for y in range(20):
+            world_data.append([])
+            for x in range(1000):
+                world_data[y].append(0)
+        for x in range(1000):
+            height = int(noise1d.noise(x/10)*5+3)
+            for y in range(height, 20):
+                world_data[y][x] = 1
+        return world_data
+
+
     # Load world
     def load(self, world_data):
         # Create a sprite group and dictionary for tiles
         for row_index, row in enumerate(world_data):
             for col_index, tile_id in enumerate(row):
-                    new_tile = t.Tile(col_index * c.TILE_SIZE, row_index * c.TILE_SIZE, tile_id)
-                    self._tile_group.add(new_tile)
-                    self._tile_dic[(col_index, row_index)] = new_tile
+                    if tile_id != 0:
+                        new_tile = t.Tile(col_index * c.TILE_SIZE, row_index * c.TILE_SIZE, tile_id)
+                        self._tile_group.add(new_tile)
+                        self._tile_dic[(col_index, row_index)] = new_tile
 
     # Get nearby tiles to player
     def get_nearby(self, rect):

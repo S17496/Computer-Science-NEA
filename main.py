@@ -8,23 +8,27 @@ pygame.init()
 screen = pygame.display.set_mode((c.SCREEN_WIDTH,c.SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
-world_list = [[0,0,0,0,0,0,0,0,0,0],
-         [0,0,2,1,0,0,0,2,0,0],
-         [0,1,1,2,1,0,1,2,1,0],
-         [1,1,1,1,1,1,1,1,1,1]]
 
-
+# Creating objects
+noise1d = w.PerlinNoise(0)
 player1 = p.Player(0, 0)
-world = w.World(world_list)
+world = w.World(noise1d)
 font = pygame.font.Font(None, 32)
+inventory_ui = p.InventoryUI(font)
 
+# Starting camera coordinates
 camera_x = 0
 camera_y = 0
+
+# Main loop
 running = True
 while running:
     for event in pygame.event.get():
+        # User quits
         if event.type == pygame.QUIT:
             running = False
+
+        # Breaking a tile
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             mouse_pos = (int((mouse_pos[0]+camera_x)//c.TILE_SIZE), int((mouse_pos[1]+camera_y)//c.TILE_SIZE))
@@ -33,18 +37,18 @@ while running:
             world.break_tile(mouse_pos)
             
 
-    
-    
+    # Allows only nearby tiles to be checked for collisions
     nearby_tiles = world.get_nearby(player1.rect)
     player1.update(nearby_tiles)
     
 
-
+    # Camera movement
     target_x = player1.rect.centerx - c.SCREEN_WIDTH//2
     target_y = player1.rect.centery - c.SCREEN_HEIGHT//2
     camera_x += (target_x - camera_x) * 0.1
     camera_y += (target_y - camera_y) * 0.1
 
+    # Drawing
     screen.fill((0,0,150))
 
     for tile in world._tile_group:
@@ -53,7 +57,7 @@ while running:
     
     screen.blit(player1.image, (player1.rect.x - camera_x, player1.rect.y - camera_y))
 
-    screen.blit(font.render("hi", True, (255, 255, 255)), (10, 10))
+    inventory_ui.render(screen, player1.get_inventory())
    
     pygame.display.update()
     # 60 FPS
