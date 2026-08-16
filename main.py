@@ -33,7 +33,7 @@ while running:
             mouse_pos = pygame.mouse.get_pos()
             mouse_pos = (int((mouse_pos[0]+camera_x)//c.TILE_SIZE), int((mouse_pos[1]+camera_y)//c.TILE_SIZE))
             if mouse_pos in world._tile_dic:
-                player1.update_inventory(world._tile_dic[mouse_pos].get_name())
+                player1.update_inventory(p.Item(world._tile_dic[mouse_pos].get_name(), 1, 9999))
             world.break_tile(mouse_pos)
             
 
@@ -42,7 +42,7 @@ while running:
     player1.update(nearby_tiles)
     
 
-    # Camera movement
+    # Camera movementd
     target_x = player1.rect.centerx - c.SCREEN_WIDTH//2
     target_y = player1.rect.centery - c.SCREEN_HEIGHT//2
     camera_x += (target_x - camera_x) * 0.1
@@ -57,7 +57,7 @@ while running:
     
     screen.blit(player1.image, (player1.rect.x - camera_x, player1.rect.y - camera_y))
 
-    inventory_ui.render(screen, player1.get_inventory())
+    inventory_ui.render(screen, player1.get_inventory().get_items())
    
     pygame.display.update()
     # 60 FPS
