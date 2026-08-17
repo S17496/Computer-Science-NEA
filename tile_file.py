@@ -1,9 +1,9 @@
 import pygame
 import config_file as c
 
-tile_properties = {0: ["air", (255, 255, 255)],
-                   1: ["dirt", (200, 0, 0)],
-                   2: ["stone", (0, 200, 0)]}
+tile_properties = {0: ["air", (255, 255, 255), 0],
+                   1: ["dirt", "dirt.png", 10],
+                   2: ["stone", (0, 200, 0), 20]}
 
 class Tile(pygame.sprite.Sprite):
     # Constructor
@@ -13,11 +13,11 @@ class Tile(pygame.sprite.Sprite):
         # Block properties
         self.__id = id
         self.__name = tile_properties[self.__id][0]
-        self.__colour = tile_properties[self.__id][1]
+        self.__texture = pygame.image.load(tile_properties[self.__id][1]).convert_alpha()
+        self.__hardness = tile_properties[self.__id][2]
 
         # Pygame convention for sprites. Attributes kept public.
         self.image = pygame.Surface((c.TILE_SIZE, c.TILE_SIZE))
-        self.image.fill(self.__colour)
         self.rect = self.image.get_rect(topleft=(x,y))
 
     
@@ -27,5 +27,11 @@ class Tile(pygame.sprite.Sprite):
         return self.__id
 
     def get_name(self) -> str:
-            return self.__name
+        return self.__name
+
+    def get_hardness(self) -> int:
+        return self.__hardness
+
+    def get_texture(self) -> int:
+            return self.__texture
     

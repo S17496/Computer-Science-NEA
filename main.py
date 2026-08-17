@@ -35,14 +35,21 @@ while running:
             if mouse_pos in world._tile_dic:
                 player1.update_inventory(p.Item(world._tile_dic[mouse_pos].get_name(), 1, 9999))
             world.break_tile(mouse_pos)
-            
+
+        # Switching slot
+        elif event.type == pygame.KEYDOWN:
+            if event.key in [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]:            
+                slot_num = (event.key - 39) % 10
+                print(slot_num)
+                player1.get_inventory().set_selected_slot(slot_num)
+
 
     # Allows only nearby tiles to be checked for collisions
     nearby_tiles = world.get_nearby(player1.rect)
     player1.update(nearby_tiles)
     
 
-    # Camera movementd
+    # Camera movement
     target_x = player1.rect.centerx - c.SCREEN_WIDTH//2
     target_y = player1.rect.centery - c.SCREEN_HEIGHT//2
     camera_x += (target_x - camera_x) * 0.1
@@ -52,12 +59,12 @@ while running:
     screen.fill((0,0,150))
 
     for tile in world._tile_group:
-        screen.blit(tile.image, (tile.rect.x - camera_x, tile.rect.y - camera_y))
+        screen.blit(tile.get_texture(), (tile.rect.x - camera_x, tile.rect.y - camera_y))
     
     
     screen.blit(player1.image, (player1.rect.x - camera_x, player1.rect.y - camera_y))
 
-    inventory_ui.render(screen, player1.get_inventory().get_items())
+    inventory_ui.render_hotbar(screen, player1.get_inventory().get_items()[0:c.HOTBAR_SIZE], player1.get_inventory().get_selected_slot())
    
     pygame.display.update()
     # 60 FPS

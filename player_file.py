@@ -1,5 +1,6 @@
 import pygame
 import config_file as c
+import tile_file as t
 
 
 class Item:
@@ -21,24 +22,41 @@ class Item:
     def set_quantity(self, quantity: str) -> None:
         self._quantity = quantity
 
+class Pickaxe(Item):
+    def __init__(self, name: str, quantity: int, max_stack: int, pickaxe_power, speed) -> None:
+        super().__init__(name, quantity, max_stack)
+        self.__pickaxe_power = pickaxe_power
+        self.__speed = speed 
+
+    def break_tile(self, tile: t.Tile) -> None:
+        if self.__pickaxe_power > tile.get_hardness():
+            pass 
+            # UNFINISHED
+
+
+
 
 class InventoryUI:
     def __init__(self, font: pygame.font.Font) -> None:
         self.__font = font
         self.__box_width = 100
 
-    def render(self, screen, inventory_items: list) -> None:
+    def render_hotbar(self, screen, hotbar_items: list, selected_slot: int) -> None:
         # Draw background box
         background_box = pygame.Rect(200, 200, c.HOTBAR_SIZE * (self.__box_width + 20), 100)
         pygame.draw.rect(screen, (50, 50, 50), background_box)
 
         # Draw items
         x = 210
-        for item in inventory_items:
+        for item in hotbar_items:
             if item != None:
                 text_surface = self.__font.render(f"{item.get_name()}: {item.get_quantity()}", True, (255, 255, 255))
                 screen.blit(text_surface, (x, 200))
             x += self.__box_width + 20
+
+        # Draw selected slot
+        border = pygame.Rect(210 + selected_slot * (self.__box_width + 20), 200, 10, 10)
+        pygame.draw.rect(screen, (255, 255, 255), border)
 
 class Inventory:
     def __init__(self) -> None:
