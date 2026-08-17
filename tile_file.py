@@ -7,7 +7,7 @@ tile_properties = {0: ["air", (255, 255, 255)],
 
 class Tile(pygame.sprite.Sprite):
     # Constructor
-    def __init__(self, x, y, id):
+    def __init__(self, x: int, y: int, id) -> None:
         super().__init__()
 
         # Block properties
@@ -23,9 +23,9 @@ class Tile(pygame.sprite.Sprite):
     
 
     # Getters and setters
-    def get_id(self):
+    def get_id(self) -> int:
         return self.__id
 
-    def get_name(self):
+    def get_name(self) -> str:
             return self.__name
     
