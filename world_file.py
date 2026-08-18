@@ -1,5 +1,5 @@
 import pygame
-import config_file as c
+import config_file as conf
 import tile_file as t
 import math
 import random
@@ -70,14 +70,14 @@ class World:
         for row_index, row in enumerate(world_data):
             for col_index, tile_id in enumerate(row):
                     if tile_id != 0:
-                        new_tile = t.Tile(col_index * c.TILE_SIZE, row_index * c.TILE_SIZE, tile_id)
+                        new_tile = t.Tile(col_index * conf.TILE_SIZE, row_index * conf.TILE_SIZE, tile_id)
                         self._tile_group.add(new_tile)
                         self._tile_dic[(col_index, row_index)] = new_tile
 
     # Get nearby tiles to player
     def get_nearby(self, rect):
-        position_x = rect.centerx // c.TILE_SIZE
-        position_y = rect.centery // c.TILE_SIZE
+        position_x = rect.centerx // conf.TILE_SIZE
+        position_y = rect.centery // conf.TILE_SIZE
         nearby = []
         for i in range(position_x - 2, position_x + 3):
             for j in range(position_y - 2, position_y + 3):

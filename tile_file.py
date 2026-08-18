@@ -1,5 +1,5 @@
 import pygame
-import config_file as c
+import config_file as conf
 
 tile_properties = {0: ["air", (255, 255, 255), 0],
                    1: ["dirt", "dirt.png", 10],
@@ -17,7 +17,7 @@ class Tile(pygame.sprite.Sprite):
         self.__hardness = tile_properties[self.__id][2]
 
         # Pygame convention for sprites. Attributes kept public.
-        self.image = pygame.Surface((c.TILE_SIZE, c.TILE_SIZE))
+        self.image = pygame.Surface((conf.TILE_SIZE, conf.TILE_SIZE))
         self.rect = self.image.get_rect(topleft=(x,y))
 
     

@@ -1,5 +1,5 @@
 import pygame
-import config_file as c
+import config_file as conf
 import tile_file as t
 
 
@@ -36,9 +36,14 @@ class Pickaxe(Item):
     def get_speed(self) -> int:
         return self.__speed
 
+class TileItem(Item):
+    def __init__(self, name: str, quantity: int, max_stack: int, tile: t.Tile) -> None:
+            super().__init__(name, quantity, max_stack)
+            self.__tile = tile
 
-
-
+    def get_tile(self) -> t.Tile:
+        return self.__tile
+    
 class InventoryUI:
     def __init__(self, font: pygame.font.Font) -> None:
         self.__font = font
@@ -46,7 +51,7 @@ class InventoryUI:
 
     def render_hotbar(self, screen, hotbar_items: list, selected_slot: int) -> None:
         # Draw background box
-        background_box = pygame.Rect(200, 200, c.HOTBAR_SIZE * (self.__box_width + 20), 100)
+        background_box = pygame.Rect(200, 200, conf.HOTBAR_SIZE * (self.__box_width + 20), 100)
         pygame.draw.rect(screen, (50, 50, 50), background_box)
 
         # Draw items
@@ -67,7 +72,7 @@ class Inventory:
         
         # Fills in all inventory slots with placeholder None
         self.__items = []
-        for _ in range(c.INVENTORY_SIZE):
+        for _ in range(conf.INVENTORY_SIZE):
             self.__items.append(None)
 
 
@@ -76,13 +81,13 @@ class Inventory:
         return self.__items
 
     def add_item(self, item: Item) -> None:
-        for i in range(c.INVENTORY_SIZE):
+        for i in range(conf.INVENTORY_SIZE):
             if self.__items[i] != None:
                 if item.get_name() == self.__items[i].get_name() and self.__items[i].get_quantity() < self.__items[i].get_max_stack():
                     self.__items[i].set_quantity(self.__items[i].get_quantity() + 1)
                     break
         else:
-            for i in range(c.INVENTORY_SIZE):
+            for i in range(conf.INVENTORY_SIZE):
                 if self.__items[i] == None:
                     self.__items[i] = item
                     break
@@ -116,8 +121,8 @@ class Player(pygame.sprite.Sprite):
         self.__vel_x = 0
         self.__vel_y = 0
         self.__speed = 5
-        self.__gravity = 0.4
-        self.__jump_strength = -12
+        self.__gravity = 0.6
+        self.__jump_strength = -14
         self.__on_ground = False
 
 
