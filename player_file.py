@@ -33,6 +33,9 @@ class Pickaxe(Item):
             pass 
             # UNFINISHED
 
+    def get_speed(self) -> int:
+        return self.__speed
+
 
 
 
