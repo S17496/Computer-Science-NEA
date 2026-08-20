@@ -3,7 +3,61 @@ import config_file as conf
 import world_file as w
 import player_file as p
 import camera_file as cam
+import inventory_file as inv
 
+def handle_slot_switching(event, player: p.Player) -> None:
+    slot_num = (event.key - 39) % 10
+    player.get_inventory().set_selected_slot(slot_num)
+    
+
+def handle_key_event(event, player: p.Player) -> None:
+    if event.key in [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]:
+        handle_slot_switching(event, player)
+
+def handle_left_click(player: p.Player) -> None:
+    global breakstart, break_target
+    if isinstance(player.get_inventory().get_selected_item(), inv.Pickaxe):
+        break_time = int(2000/player.get_inventory().get_selected_item().get_speed())
+        mouse_pos = pygame.mouse.get_pos()
+        tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
+        if tile_pos in world._tile_dic:
+            if breakstart == None:
+                breakstart = pygame.time.get_ticks()
+                break_target = tile_pos
+    
+            elapsed = pygame.time.get_ticks() - breakstart
+    
+            if tile_pos != break_target:
+                breakstart = None
+                break_target = None 
+    
+            if elapsed >= break_time and break_target != None:
+                player.update_inventory(inv.TileItem(world._tile_dic[tile_pos].get_name(), 1, 9999, world._tile_dic[tile_pos]))
+                world.break_tile(tile_pos)
+                breakstart = None
+                break_target = None
+    
+    elif isinstance(player.get_inventory().get_selected_item(), p.TileItem):
+        mouse_pos = pygame.mouse.get_pos()
+        tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
+        if tile_pos not in world._tile_dic:
+            # PLACE BLOCK CODE
+            item = player.get_inventory().get_selected_item()
+            item.set_quantity(item.get_quantity()-1)
+    
+
+
+def handle_events(player) -> bool:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            return False
+        elif event.type == pygame.KEYDOWN:
+            handle_key_event(event, player)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            pass
+        elif pygame.mouse.get_pressed()[0]:
+            handle_left_click(player)
+    return True
 
 # Pygame Initialisations
 pygame.init()
@@ -13,14 +67,14 @@ clock = pygame.time.Clock()
 
 # Creating objects
 noise1d = w.PerlinNoise(0)
-player1 = p.Player(0, 0)
+player1 = p.Player(conf.TILE_SIZE * 500, 0)
 world = w.World(noise1d)
 font = pygame.font.Font(None, 32)
 inventory_ui = p.InventoryUI(font)
 camera = cam.Camera()
 
 # Temporary pickaxe giver
-player1.get_inventory().add_item(p.Pickaxe("Copper pickaxe", 1, 1, 1, 1))
+player1.get_inventory().add_item(inv.Pickaxe("Copper pickaxe", 1, 1, 1, 1))
 
 # Variable used for timing tile breaking
 breakstart = None
@@ -28,53 +82,7 @@ breakstart = None
 # Main loop
 running = True
 while running:
-    for event in pygame.event.get():
-        # User quits
-        if event.type == pygame.QUIT:
-            running = False
-
-        # Left click
-        elif pygame.mouse.get_pressed()[0]:
-
-            # Breaking a tile
-            if isinstance(player1.get_inventory().get_selected_item(), p.Pickaxe):
-                break_time = int(2000/player1.get_inventory().get_selected_item().get_speed())
-                mouse_pos = pygame.mouse.get_pos()
-                tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
-                if tile_pos in world._tile_dic:
-                    if breakstart == None:
-                        breakstart = pygame.time.get_ticks()
-                        break_target = tile_pos
-
-                    elapsed = pygame.time.get_ticks() - breakstart
-
-                    if tile_pos != break_target:
-                        breakstart = None
-                        break_target = None 
-
-                    if elapsed >= break_time and break_target != None:
-                        player1.update_inventory(p.TileItem(world._tile_dic[tile_pos].get_name(), 1, 9999, world._tile_dic[tile_pos]))
-                        world.break_tile(tile_pos)
-                        breakstart = None
-                        break_target = None
-
-            elif isinstance(player1.get_inventory().get_selected_item(), p.TileItem):
-                mouse_pos = pygame.mouse.get_pos()
-                tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
-                if tile_pos not in world._tile_dic:
-                    # PLACE BLOCK CODE
-                    item = player1.get_inventory().get_selected_item()
-                    item.set_quantity(item.get_quantity()-1)
-
-            
-
-
-        # Switching slot
-        elif event.type == pygame.KEYDOWN:
-            if event.key in [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]:            
-                slot_num = (event.key - 39) % 10
-                print(slot_num)
-                player1.get_inventory().set_selected_slot(slot_num)
+    running = handle_events(player1)
 
 
     # Allows only nearby tiles to be checked for collisions
