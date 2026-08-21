@@ -11,6 +11,7 @@ class Entity(pygame.sprite.Sprite):
 
 
 class ItemEntity(Entity):
-      def __init__(self, x: int, y: int, image: str, item: inv.Item) -> None:
+    def __init__(self, x: int, y: int, image: str, item: inv.Item) -> None:
         super().__init__(x, y, image)
         self.__item = item
+

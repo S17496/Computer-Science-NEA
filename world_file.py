@@ -56,11 +56,11 @@ class World:
         for y in range(20):
             world_data.append([])
             for x in range(1000):
-                world_data[y].append(0)
+                world_data[y].append(-1)
         for x in range(1000):
             height = int(noise1d.noise(x/10)*5+3)
             for y in range(height, 20):
-                world_data[y][x] = 1
+                world_data[y][x] = 0
         return world_data
 
 
@@ -69,8 +69,8 @@ class World:
         # Create a sprite group and dictionary for tiles
         for row_index, row in enumerate(world_data):
             for col_index, tile_id in enumerate(row):
-                    if tile_id != 0:
-                        new_tile = t.Tile(col_index * conf.TILE_SIZE, row_index * conf.TILE_SIZE, tile_id)
+                    if tile_id != -1:
+                        new_tile = t.Tile(col_index * conf.TILE_SIZE, row_index * conf.TILE_SIZE, str(tile_id))
                         self._tile_group.add(new_tile)
                         self._tile_dic[(col_index, row_index)] = new_tile
 

@@ -1,11 +1,14 @@
 import config_file as conf
 import tile_file as t
+import json
 
 class Item:
-    def __init__(self, name: str, quantity: int, max_stack: int) -> None:
-        self._name = name
+    def __init__(self, id: str, quantity: int) -> None:
+        with open("item_data.json", "r") as file:
+            item_data = json.load(file)[id]
+        self._name = item_data["name"]
         self._quantity = quantity 
-        self._max_stack = max_stack
+        self._max_stack = item_data["max_stack"]
 
     # Getters and setters
     def get_name(self) -> str:
@@ -21,23 +24,27 @@ class Item:
         self._quantity = quantity
 
 class Pickaxe(Item):
-    def __init__(self, name: str, quantity: int, max_stack: int, pickaxe_power, speed) -> None:
-        super().__init__(name, quantity, max_stack)
-        self.__pickaxe_power = pickaxe_power
-        self.__speed = speed 
+    def __init__(self, id: str, quantity: int) -> None:
+        super().__init__(id, quantity)
+        with open("item_data.json", "r") as file:
+                    item_data = json.load(file)[id]
+        self.__pickaxe_power = item_data["pickaxe_power"]
+        self.__pickaxe_speed = item_data["pickaxe_speed"]
 
     def break_tile(self, tile: t.Tile) -> None:
         if self.__pickaxe_power > tile.get_hardness():
             pass 
             # UNFINISHED
 
-    def get_speed(self) -> int:
-        return self.__speed
+    def get_pickaxe_speed(self) -> int:
+        return self.__pickaxe_speed
 
 class TileItem(Item):
-    def __init__(self, name: str, quantity: int, max_stack: int, tile: t.Tile) -> None:
-            super().__init__(name, quantity, max_stack)
-            self.__tile = tile
+    def __init__(self, id: str, quantity: str) -> None:
+        super().__init__(id, quantity)
+        with open("item_data.json", "r") as file:
+            item_data = json.load(file)[id]
+        self.__tile_id = item_data["tile_id"]
 
     def get_tile(self) -> t.Tile:
         return self.__tile

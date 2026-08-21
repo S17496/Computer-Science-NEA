@@ -1,0 +1,17 @@
+{
+    "0": {
+            "name": "Dirt",
+            "texture": "assets/tiles/dirt.png",
+            "breakable": true,
+            "required_pickaxe_power": 0,
+            "hardness": 1,
+            "drops": 
+                {
+                    "item_id": "0",
+                    "amount": 1
+                }
+            
+        },
+    
+        "1": {}
+    }

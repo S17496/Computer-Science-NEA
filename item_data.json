@@ -1,0 +1,19 @@
+{
+    "0" : {
+        "name": "Dirt",
+        "type": "block",
+        "max_stack": 999,
+        "texture": "assets/items/dirt.png",
+        "tile_id": "dirt"       
+    },
+
+    "100" : {
+        "name": "Copper Pickaxe",
+        "type": "block",
+        "max_stack": 999,
+        "texture": "assets/items/copper_pickaxe.png",
+        "pickaxe_power": 0,
+        "pickaxe_speed": 1
+    }
+
+}

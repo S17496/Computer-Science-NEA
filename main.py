@@ -17,7 +17,7 @@ def handle_key_event(event, player: p.Player) -> None:
 def handle_left_click(player: p.Player) -> None:
     global breakstart, break_target
     if isinstance(player.get_inventory().get_selected_item(), inv.Pickaxe):
-        break_time = int(2000/player.get_inventory().get_selected_item().get_speed())
+        break_time = int(2000/player.get_inventory().get_selected_item().get_pickaxe_speed())
         mouse_pos = pygame.mouse.get_pos()
         tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
         if tile_pos in world._tile_dic:
@@ -32,7 +32,7 @@ def handle_left_click(player: p.Player) -> None:
                 break_target = None 
     
             if elapsed >= break_time and break_target != None:
-                player.update_inventory(inv.TileItem(world._tile_dic[tile_pos].get_name(), 1, 9999, world._tile_dic[tile_pos]))
+                player.update_inventory(inv.TileItem(world._tile_dic[tile_pos].get_item_id(), 1))
                 world.break_tile(tile_pos)
                 breakstart = None
                 break_target = None
@@ -74,7 +74,7 @@ inventory_ui = p.InventoryUI(font)
 camera = cam.Camera()
 
 # Temporary pickaxe giver
-player1.get_inventory().add_item(inv.Pickaxe("Copper pickaxe", 1, 1, 1, 1))
+player1.get_inventory().add_item(inv.Pickaxe("100", 1))
 
 # Variable used for timing tile breaking
 breakstart = None
@@ -97,7 +97,7 @@ while running:
     screen.fill((0,0,150))
 
     for tile in world._tile_group:
-        screen.blit(tile.get_texture(), (tile.rect.x - camera.get_x(), tile.rect.y - camera.get_y()))
+        screen.blit(tile.image, (tile.rect.x - camera.get_x(), tile.rect.y - camera.get_y()))
     
     
     screen.blit(player1.image, (player1.rect.x - camera.get_x(), player1.rect.y - camera.get_y()))
