@@ -1,5 +1,5 @@
 import config_file as conf
-import tile_file as t
+from tile_file import Tile
 import json
 
 class Item:
@@ -31,7 +31,7 @@ class Pickaxe(Item):
         self.__pickaxe_power = item_data["pickaxe_power"]
         self.__pickaxe_speed = item_data["pickaxe_speed"]
 
-    def break_tile(self, tile: t.Tile) -> None:
+    def break_tile(self, tile: Tile) -> None:
         if self.__pickaxe_power > tile.get_hardness():
             pass 
             # UNFINISHED
@@ -46,7 +46,7 @@ class TileItem(Item):
             item_data = json.load(file)[id]
         self.__tile_id = item_data["tile_id"]
 
-    def get_tile(self) -> t.Tile:
+    def get_tile(self) -> Tile:
         return self.__tile
 
 class Inventory:

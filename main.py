@@ -4,6 +4,7 @@ import world_file as w
 import player_file as p
 import camera_file as cam
 import inventory_file as inv
+import inventoryUI_file as invUI
 
 def handle_slot_switching(event, player: p.Player) -> None:
     slot_num = (event.key - 39) % 10
@@ -16,6 +17,8 @@ def handle_key_event(event, player: p.Player) -> None:
 
 def handle_left_click(player: p.Player) -> None:
     global breakstart, break_target
+    # Breaking blocks
+
     if isinstance(player.get_inventory().get_selected_item(), inv.Pickaxe):
         break_time = int(2000/player.get_inventory().get_selected_item().get_pickaxe_speed())
         mouse_pos = pygame.mouse.get_pos()
@@ -32,7 +35,8 @@ def handle_left_click(player: p.Player) -> None:
                 break_target = None 
     
             if elapsed >= break_time and break_target != None:
-                player.update_inventory(inv.TileItem(world._tile_dic[tile_pos].get_item_id(), 1))
+                tile_item_entity = world._tile_dic[tile_pos].drop_tile(inv.Item(world._tile_dic[tile_pos].get_item_id(), 1))
+                item_entities.add(tile_item_entity)
                 world.break_tile(tile_pos)
                 breakstart = None
                 break_target = None
@@ -67,17 +71,18 @@ clock = pygame.time.Clock()
 
 # Creating objects
 noise1d = w.PerlinNoise(0)
-player1 = p.Player(conf.TILE_SIZE * 500, 0)
+player1 = p.Player(conf.TILE_SIZE * 500, 0, "player.png")
 world = w.World(noise1d)
 font = pygame.font.Font(None, 32)
-inventory_ui = p.InventoryUI(font)
+inventory_ui = invUI.InventoryUI(font)
 camera = cam.Camera()
+item_entities = pygame.sprite.Group()
 
 # Temporary pickaxe giver
 player1.get_inventory().add_item(inv.Pickaxe("100", 1))
 
-# Variable used for timing tile breaking
-breakstart = None
+# Variable used for breaking blocks
+breakstart = None 
 
 # Main loop
 running = True
@@ -86,22 +91,29 @@ while running:
 
 
     # Allows only nearby tiles to be checked for collisions
-    nearby_tiles = world.get_nearby(player1.rect)
+    nearby_tiles = world.get_nearby(player1.rect, 10, 10)
     player1.update(nearby_tiles)
     
 
     # Camera movement
     camera.move_camera(player1.rect.centerx - conf.SCREEN_WIDTH//2, player1.rect.centery - conf.SCREEN_HEIGHT//2)
 
-    # Drawing
+    # Draw background
     screen.fill((0,0,150))
 
-    for tile in world._tile_group:
+    # Draw item_entities
+    for item_entity in item_entities:
+        screen.blit(item_entity.image, (item_entity.rect.x - camera.get_x(), item_entity.rect.y - camera.get_y()))
+
+    # Draw tiles
+    tiles_to_draw = world.get_nearby(player1.rect, conf.SCREEN_WIDTH // conf.TILE_SIZE, conf.SCREEN_HEIGHT // conf.TILE_SIZE)
+    for tile in tiles_to_draw:
         screen.blit(tile.image, (tile.rect.x - camera.get_x(), tile.rect.y - camera.get_y()))
     
-    
+    # Draw player
     screen.blit(player1.image, (player1.rect.x - camera.get_x(), player1.rect.y - camera.get_y()))
 
+    # Draw hotbar
     inventory_ui.render_hotbar(screen, player1.get_inventory().get_items()[0:conf.HOTBAR_SIZE], player1.get_inventory().get_selected_slot())
    
     pygame.display.update()
