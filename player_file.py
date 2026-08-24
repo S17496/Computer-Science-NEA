@@ -1,6 +1,7 @@
 import pygame
 import inventory_file as inv
 import entity_file as ent
+import items_file as items
 
 
 class Player(ent.Entity):
@@ -24,7 +25,7 @@ class Player(ent.Entity):
     def get_inventory(self) -> inv.Inventory:
         return self.__inventory
 
-    def update_inventory(self, item: inv.Item) -> None:
+    def update_inventory(self, item: items.Item) -> None:
         self.__inventory.add_item(item)
 
 

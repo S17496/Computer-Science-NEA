@@ -5,6 +5,7 @@ import player_file as p
 import camera_file as cam
 import inventory_file as inv
 import inventoryUI_file as invUI
+import items_file as items
 
 def handle_slot_switching(event, player: p.Player) -> None:
     slot_num = (event.key - 39) % 10
@@ -19,7 +20,7 @@ def handle_left_click(player: p.Player) -> None:
     global breakstart, break_target
     # Breaking blocks
 
-    if isinstance(player.get_inventory().get_selected_item(), inv.Pickaxe):
+    if isinstance(player.get_inventory().get_selected_item(), items.Pickaxe):
         break_time = int(2000/player.get_inventory().get_selected_item().get_pickaxe_speed())
         mouse_pos = pygame.mouse.get_pos()
         tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
@@ -35,7 +36,7 @@ def handle_left_click(player: p.Player) -> None:
                 break_target = None 
     
             if elapsed >= break_time and break_target != None:
-                tile_item_entity = world._tile_dic[tile_pos].drop_tile(inv.Item(world._tile_dic[tile_pos].get_item_id(), 1))
+                tile_item_entity = world._tile_dic[tile_pos].drop_tile(items.Item(world._tile_dic[tile_pos].get_item_id(), 1))
                 item_entities.add(tile_item_entity)
                 world.break_tile(tile_pos)
                 breakstart = None
@@ -79,7 +80,7 @@ camera = cam.Camera()
 item_entities = pygame.sprite.Group()
 
 # Temporary pickaxe giver
-player1.get_inventory().add_item(inv.Pickaxe("100", 1))
+player1.get_inventory().add_item(items.Pickaxe("100", 1))
 
 # Variable used for breaking blocks
 breakstart = None 
@@ -91,7 +92,7 @@ while running:
 
 
     # Allows only nearby tiles to be checked for collisions
-    nearby_tiles = world.get_nearby(player1.rect, 10, 10)
+    nearby_tiles = world.get_nearby_rects(player1.rect, 10, 10)
     player1.update(nearby_tiles)
     
 

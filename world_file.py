@@ -40,55 +40,87 @@ class PerlinNoise:
 
         return self.lerp(left_influence, right_influence, fade)
 
+class Chunk:
+    def __init__(self):
+        self.__tiles = [[0 for _ in range(conf.CHUNK_SIZE)] for _ in range(conf.CHUNK_SIZE)]
 
+    # Getters and setters
+    def get_chunk(self) -> list:
+        return self.__tiles
 
+    def change_tile(self, x: int, y: int, value: int) -> None:
+        self.__tiles[x][y] = value
+
+    def get_tile_id(self, x: int, y: int):
+        return self.__tiles[x][y]
 
 class World:
     # Constructor
     def __init__(self, noise1d: PerlinNoise) -> None:
-        self._tile_group = pygame.sprite.Group()
-        self._tile_dic = {}
-        self.__world_data = self.generate_world(noise1d)
-        self.load(self.__world_data)
+        self.__chunks = self.generate_world(self.generate_surface_heights(noise1d, 15, 25))
 
-    def generate_world(self, noise1d: PerlinNoise) -> list:
-        world_data = []
-        for y in range(50):
-            world_data.append([])
-            for x in range(1000):
-                world_data[y].append(-1)
-        for x in range(1000):
-            height = int(noise1d.noise(x/50)*20+25)
-            for y in range(height, 50):
-                print(y)
-                world_data[y][x] = 0
+
+    def generate_surface_heights(self, noise1d: PerlinNoise, period: int, amplitude: int) -> list:
+        heights = []
+        for x in range(conf.CHUNK_SIZE * 20):
+            heights.append(int((noise1d.noise(x/period) + 1) * amplitude))
+        return heights
+
+    def generate_world(self, heights: list) -> dict:
+        world_data = {}
+        for x_chunk in range(20):
+            for y_chunk in range(10):
+                chunk = Chunk()
+                for x in range(conf.CHUNK_SIZE):
+                    for y in range(conf.CHUNK_SIZE):
+                        x_coordinate = x + x_chunk * conf.CHUNK_SIZE
+                        y_coordinate = y + y_chunk * conf.CHUNK_SIZE
+                        if y_coordinate > heights[x_coordinate]:
+                            chunk.change_tile(x, y, -1)
+                world_data[(x_chunk, y_chunk)] = chunk                
         return world_data
 
+    # Returns the coordinates of the chunk which a pair of coordinates belong to 
+    def which_chunk(self, coordinates: tuple) -> tuple:
+        return (coordinates[0] // conf.CHUNK_SIZE, coordinates[1] // conf.CHUNK_SIZE)
 
-    # Load world
-    def load(self, world_data: list) -> None:
-        # Create a sprite group and dictionary for tiles
-        for row_index, row in enumerate(world_data):
-            for col_index, tile_id in enumerate(row):
-                    if tile_id != -1:
-                        new_tile = Tile(col_index * conf.TILE_SIZE, row_index * conf.TILE_SIZE, str(tile_id))
-                        self._tile_group.add(new_tile)
-                        self._tile_dic[(col_index, row_index)] = new_tile
+    # Returns the coordinates relative to the chunk a pair of coordinates are in
+    def where_in_chunk(self, coordinates: tuple) -> tuple:
+            return (coordinates[0] // conf.CHUNK_SIZE, coordinates[1] // conf.CHUNK_SIZE)
 
-    # Get nearby tiles to player
-    def get_nearby(self, rect, range_x: int, range_y: int) -> list:
-        position_x = rect.centerx // conf.TILE_SIZE
-        position_y = rect.centery // conf.TILE_SIZE
+    # Get nearby rects to player for checking collisions
+    def get_nearby_rects(self, rect, range_x: int, range_y: int) -> list:
+        world_position_x = rect.centerx // conf.TILE_SIZE
+        world_position_y = rect.centery // conf.TILE_SIZE
         nearby = []
-        for i in range(position_x - range_x, position_x + range_x + 1):
-            for j in range(position_y - range_y, position_y + range_y + 1):
-                if (i,j) in self._tile_dic:
-                    nearby.append(self._tile_dic[(i,j)])
+        for x in range(-range_x, range_x + 1):
+            for y in range(-range_y, range_y + 1):
+                chunk_coordinates = self.which_chunk((world_position_x + x, world_position_y + y))
+                coordinates_in_chunk = self.where_in_chunk((world_position_x + x, world_position_y + y))
+                tile_id = self.__chunks[chunk_coordinates].get_tile_id(coordinates_in_chunk[0], coordinates_in_chunk[1])
+                if tile_id > -1:
+                    nearby.append(pygame.rect.Rect(world_position_x + x, world_position_y + y, conf.TILE_SIZE, conf.TILE_SIZE))
         return nearby
+
+    def get_nearby_chunks(self, rect, range_x: int, range_y: int) -> dict:
+        world_position_x = rect.centerx // conf.TILE_SIZE
+        world_position_y = rect.centery // conf.TILE_SIZE
+        nearby = {}
+        for x in range(-range_x, range_x + 1):
+            for y in range(-range_y, range_y + 1):
+                nearby[(world_position_x + x, world_position_y + y)] = self.__chunks[(world_position_x + x, world_position_y + y)]
+        return nearby 
 
 
     def break_tile(self, coordinates: tuple) -> None:
-        if coordinates in self._tile_dic:
-            broken_tile = self._tile_dic.pop(coordinates)
-            self._tile_group.remove(broken_tile)
+        pass
+
+    def render_world(self, player_rect, screen , camera: object):
+        chunks = self.get_nearby_chunks(player_rect, conf.RENDER_DISTANCE, conf.RENDER_DISTANCE)
+        for chunk in chunks:
+            chunk_data = chunks[chunk]
+
+    # Getters and setters
+    def get_chunk(self, coordinates: tuple) -> list:
+        return self.__chunks[coordinates]
 
