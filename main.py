@@ -3,7 +3,6 @@ import config_file as conf
 import world_file as w
 import player_file as p
 import camera_file as cam
-import inventory_file as inv
 import inventoryUI_file as invUI
 import items_file as items
 
@@ -17,13 +16,15 @@ def handle_key_event(event, player: p.Player) -> None:
         handle_slot_switching(event, player)
 
 def handle_left_click(player: p.Player) -> None:
-    global breakstart, break_target
-    # Breaking blocks
 
+    # Breaking blocks
+    global breakstart, break_target
     if isinstance(player.get_inventory().get_selected_item(), items.Pickaxe):
         break_time = int(2000/player.get_inventory().get_selected_item().get_pickaxe_speed())
         mouse_pos = pygame.mouse.get_pos()
-        tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
+        tile_coordinates = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
+        chunk_coordinates = world.which_chunk(tile_coordinates)
+        
         if tile_pos in world._tile_dic:
             if breakstart == None:
                 breakstart = pygame.time.get_ticks()

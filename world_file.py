@@ -63,6 +63,15 @@ class Chunk:
 
 
     # Getters and setters
+
+    def get_tile_rect(self, coordinates_in_chunk: tuple) -> pygame.rect.Rect:
+        """Returns a rect object with correct world coordinates based on its tile coordinates in the chunk."""
+        if self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]] > 0:
+            left = (self.__coordinates[0] * conf.CHUNK_SIZE + coordinates_in_chunk[0]) * conf.TILE_SIZE
+            top = (self.__coordinates[1] * conf.CHUNK_SIZE + coordinates_in_chunk[1]) * conf.TILE_SIZE
+            return pygame.rect.Rect(left, top, conf.TILE_SIZE, conf.TILE_SIZE)
+
+
     def get_chunk(self) -> list:
         return self.__tiles
 
@@ -107,16 +116,19 @@ class World:
                 world_data[(x_chunk, y_chunk)] = chunk                
         return world_data
 
-    # Returns the coordinates of the chunk which a pair of coordinates belong to 
-    def which_chunk(self, coordinates: tuple) -> tuple:
-        return (coordinates[0] // conf.CHUNK_SIZE, coordinates[1] // conf.CHUNK_SIZE)
 
-    # Returns the coordinates relative to the chunk a pair of coordinates are in
+    def which_chunk(self, tile_coordinates: tuple) -> tuple:
+        """Returns chunk coordinates based on tile coordinates."""
+        return (tile_coordinates[0] // conf.CHUNK_SIZE, tile_coordinates[1] // conf.CHUNK_SIZE)
+
+
     def where_in_chunk(self, coordinates: tuple) -> tuple:
+        """Returns tile coordinates in chunk based on tile coordinates."""
         return (coordinates[0] % conf.CHUNK_SIZE, coordinates[1] % conf.CHUNK_SIZE)
 
     # Get nearby rects to player for checking collisions
     def get_nearby_rects(self, rect, range_x: int, range_y: int) -> list:
+        """Returns a list of tile rects around a rect."""
         world_position_x = rect.centerx // conf.TILE_SIZE
         world_position_y = rect.centery // conf.TILE_SIZE
         nearby = []
@@ -124,10 +136,10 @@ class World:
             for y in range(-range_y, range_y + 1):
                 chunk_coordinates = self.which_chunk((world_position_x + x, world_position_y + y))
                 coordinates_in_chunk = self.where_in_chunk((world_position_x + x, world_position_y + y))
-                if chunk_coordinates[0] > 0 and chunk_coordinates[1] > 0:
-                    tile_id = self.__chunks[chunk_coordinates].get_tile_id(coordinates_in_chunk[0], coordinates_in_chunk[1])
-                    if tile_id > -1:
-                        nearby.append(pygame.rect.Rect(world_position_x + x, world_position_y + y, conf.TILE_SIZE, conf.TILE_SIZE))
+                chunk = self.__chunks[(chunk_coordinates)]
+                if chunk_coordinates in self.__chunks:
+                    tile_rect = chunk.get_tile_rect(coordinates_in_chunk)
+                    nearby.append(tile_rect)
         return nearby
 
     def get_nearby_chunks(self, rect, range_x: int, range_y: int) -> dict:
