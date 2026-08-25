@@ -107,10 +107,8 @@ while running:
         screen.blit(item_entity.image, (item_entity.rect.x - camera.get_x(), item_entity.rect.y - camera.get_y()))
 
     # Draw tiles
-    tiles_to_draw = world.get_nearby(player1.rect, conf.SCREEN_WIDTH // conf.TILE_SIZE, conf.SCREEN_HEIGHT // conf.TILE_SIZE)
-    for tile in tiles_to_draw:
-        screen.blit(tile.image, (tile.rect.x - camera.get_x(), tile.rect.y - camera.get_y()))
-    
+    world.render_world(player1.rect, screen, camera)
+
     # Draw player
     screen.blit(player1.image, (player1.rect.x - camera.get_x(), player1.rect.y - camera.get_y()))
 
