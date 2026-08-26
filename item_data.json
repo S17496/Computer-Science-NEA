@@ -4,7 +4,7 @@
         "type": "block",
         "max_stack": 999,
         "inventory_texture": "assets/items/dirt.png",
-        "tile_id": "dirt", 
+        "tile_id": "0", 
         "dropped_texture": "assets/item_entities/dirt.png"     
     },
 

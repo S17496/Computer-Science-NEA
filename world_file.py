@@ -44,75 +44,92 @@ class PerlinNoise:
 class Chunk:
     def __init__(self, coordinates: tuple) -> None:
         self.__tiles = [[0 for _ in range(conf.CHUNK_SIZE)] for _ in range(conf.CHUNK_SIZE)]
+
         self.__coordinates = coordinates
 
-    def render(self, screen, camera: object, tile_data: dict) -> None:
+        self.__dirty = True
+
+        chunk_pixel_size = conf.CHUNK_SIZE * conf.TILE_SIZE
+        self.__surface = pygame.Surface((chunk_pixel_size, chunk_pixel_size), pygame.SRCALPHA).convert_alpha()
+
+
+    def rebuild_surface(self, tile_data: dict) -> None:
+        # Surface set to invisible
+        self.__surface.fill((0, 0, 0, 0))
+
         for x in range(conf.CHUNK_SIZE):
             for y in range(conf.CHUNK_SIZE):
 
-                # Reference to the tile's data
-                tile_id = str(self.__tiles[x][y])
+                tile_id = self.__tiles[x][y]
 
-                if int(tile_id) < 0:
-                    continue 
+                # Keep air invisible
+                if tile_id == -1:
+                    continue
 
-                world_x = (self.__coordinates[0] * conf.CHUNK_SIZE + x) * conf.TILE_SIZE
-                world_y = (self.__coordinates[1] * conf.CHUNK_SIZE + y) * conf.TILE_SIZE
+                texture = tile_data[str(tile_id)]["texture"]
+   
+                self.__surface.blit(texture, (x * conf.TILE_SIZE, y * conf.TILE_SIZE))
 
-                screen.blit(tile_data[tile_id]["texture"], (world_x - camera.get_x(), world_y - camera.get_y()))
+        self.__dirty = False
+
+    def render(self, screen, camera: object, tile_data: dict) -> None:
+        if self.__dirty:
+            self.rebuild_surface(tile_data)
+
+        chunk_world_x = (self.__coordinates[0] * conf.CHUNK_SIZE * conf.TILE_SIZE)
+        chunk_world_y = (self.__coordinates[1] * conf.CHUNK_SIZE * conf.TILE_SIZE)
+
+        screen.blit(self.__surface, (chunk_world_x - camera.get_x(), chunk_world_y - camera.get_y()))
 
 
     # Getters and setters
 
     def get_tile_rect(self, coordinates_in_chunk: tuple) -> pygame.rect.Rect:
         """Returns a rect object with correct world coordinates based on its tile coordinates in the chunk."""
-        if self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]] > 0:
+        if self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]] >= 0:
             left = (self.__coordinates[0] * conf.CHUNK_SIZE + coordinates_in_chunk[0]) * conf.TILE_SIZE
             top = (self.__coordinates[1] * conf.CHUNK_SIZE + coordinates_in_chunk[1]) * conf.TILE_SIZE
             return pygame.rect.Rect(left, top, conf.TILE_SIZE, conf.TILE_SIZE)
 
+    def change_tile(self, coordinates_in_chunk, value: int) -> None:
+        self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]] = value
+        self.__dirty = True
 
-    def get_chunk(self) -> list:
-        return self.__tiles
-
-    def change_tile(self, x: int, y: int, value: int) -> None:
-        self.__tiles[x][y] = value
-
-    def get_tile_id(self, x: int, y: int):
-        return self.__tiles[x][y]
+    def get_tile_id(self, coordinates_in_chunk: tuple) -> int:
+        return self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]]
 
 class World:
     # Constructor
     def __init__(self, noise1d: PerlinNoise) -> None:
-        self.__chunks = self.generate_world(self.generate_surface_heights(noise1d, 15, 25))
         with open("tile_data.json", "r") as tile_data:
             self.__tile_data = json.load(tile_data)
 
         # Converts file paths in tile data to pygame images
         for tile_id in self.__tile_data:
-
             texture_path = self.__tile_data[tile_id]["texture"]
-
             self.__tile_data[tile_id]["texture"] = pygame.image.load(texture_path).convert_alpha()
+
+        self.__chunks = self.generate_world(self.generate_surface_heights(noise1d, 15, 25))
 
 
     def generate_surface_heights(self, noise1d: PerlinNoise, period: int, amplitude: int) -> list:
         heights = []
-        for x in range(conf.CHUNK_SIZE * 20):
+        for x in range(conf.CHUNK_SIZE * conf.WORLD_WIDTH):
             heights.append(int((noise1d.noise(x/period) + 1) * amplitude))
         return heights
 
     def generate_world(self, heights: list) -> dict:
         world_data = {}
-        for x_chunk in range(20):
-            for y_chunk in range(10):
+        for x_chunk in range(conf.WORLD_WIDTH):
+            for y_chunk in range(conf.WORLD_HEIGHT):
                 chunk = Chunk((x_chunk, y_chunk))
                 for x in range(conf.CHUNK_SIZE):
                     for y in range(conf.CHUNK_SIZE):
                         x_coordinate = x + x_chunk * conf.CHUNK_SIZE
                         y_coordinate = y + y_chunk * conf.CHUNK_SIZE
-                        if y_coordinate > heights[x_coordinate]:
-                            chunk.change_tile(x, y, -1)
+                        if y_coordinate < heights[x_coordinate]:
+                            chunk.change_tile((x, y), -1)
+                chunk.rebuild_surface(self.__tile_data)
                 world_data[(x_chunk, y_chunk)] = chunk                
         return world_data
 
@@ -136,10 +153,11 @@ class World:
             for y in range(-range_y, range_y + 1):
                 chunk_coordinates = self.which_chunk((world_position_x + x, world_position_y + y))
                 coordinates_in_chunk = self.where_in_chunk((world_position_x + x, world_position_y + y))
-                chunk = self.__chunks[(chunk_coordinates)]
                 if chunk_coordinates in self.__chunks:
+                    chunk = self.__chunks[(chunk_coordinates)]
                     tile_rect = chunk.get_tile_rect(coordinates_in_chunk)
-                    nearby.append(tile_rect)
+                    if tile_rect != None:
+                        nearby.append(tile_rect)
         return nearby
 
     def get_nearby_chunks(self, rect, range_x: int, range_y: int) -> dict:
@@ -159,7 +177,10 @@ class World:
 
 
     def break_tile(self, coordinates: tuple) -> None:
-        pass
+        chunk_coordinates = self.get_chunk(coordinates)
+        coordinates_in_chunk = self.where_in_chunk(coordinates)
+        self.__chunks[chunk_coordinates].change_tile(coordinates_in_chunk, -1)
+
 
     def render_world(self, player_rect, screen, camera: object) -> None:
         chunks = self.get_nearby_chunks(player_rect, conf.RENDER_DISTANCE, conf.RENDER_DISTANCE)
@@ -168,8 +189,9 @@ class World:
             chunk.render(screen, camera, self.__tile_data)
 
 
-
     # Getters and setters
     def get_chunk(self, coordinates: tuple) -> list:
         return self.__chunks[coordinates]
 
+    def get_item_id(self, tile_id: str) -> str:
+        return self.__tile_data[tile_id]["drops"]["item_id"]

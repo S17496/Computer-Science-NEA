@@ -5,6 +5,12 @@ import player_file as p
 import camera_file as cam
 import inventoryUI_file as invUI
 import items_file as items
+import entity_file as ent
+import json
+
+with open("item_data.json", "r") as tile_data:
+    tile_data = json.load(tile_data)
+
 
 def handle_slot_switching(event, player: p.Player) -> None:
     slot_num = (event.key - 39) % 10
@@ -24,22 +30,26 @@ def handle_left_click(player: p.Player) -> None:
         mouse_pos = pygame.mouse.get_pos()
         tile_coordinates = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
         chunk_coordinates = world.which_chunk(tile_coordinates)
-        
-        if tile_pos in world._tile_dic:
+        coordinates_in_chunk = world.where_in_chunk(tile_coordinates)
+
+        tile_id = world.get_chunk(chunk_coordinates).get_tile_id(coordinates_in_chunk)
+        item_id = world.get_item_id(str(tile_id))
+
+        if tile_id >= 0:
             if breakstart == None:
                 breakstart = pygame.time.get_ticks()
-                break_target = tile_pos
+                break_target = tile_coordinates
     
             elapsed = pygame.time.get_ticks() - breakstart
     
-            if tile_pos != break_target:
+            if tile_coordinates != break_target:
                 breakstart = None
                 break_target = None 
     
             if elapsed >= break_time and break_target != None:
-                tile_item_entity = world._tile_dic[tile_pos].drop_tile(items.Item(world._tile_dic[tile_pos].get_item_id(), 1))
+                tile_item_entity = ent.ItemEntity(tile_coordinates[0] * conf.TILE_SIZE, tile_coordinates[1] * conf.TILE_SIZE, tile_data[item_id]["dropped_texture"], items.TileItem(item_id, 1))
                 item_entities.add(tile_item_entity)
-                world.break_tile(tile_pos)
+                world.break_tile(tile_coordinates)
                 breakstart = None
                 break_target = None
     
@@ -93,7 +103,7 @@ while running:
 
 
     # Allows only nearby tiles to be checked for collisions
-    nearby_tiles = world.get_nearby_rects(player1.rect, 10, 10)
+    nearby_tiles = world.get_nearby_rects(player1.rect, 3, 4)
     player1.update(nearby_tiles)
     
 

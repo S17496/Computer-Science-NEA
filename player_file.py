@@ -16,7 +16,7 @@ class Player(ent.Entity):
         self.__vel_x = 0
         self.__vel_y = 0
         self.__speed = 5
-        self.__gravity = 0.6
+        self.__gravity = 0.5
         self.__jump_strength = -14
         self.__on_ground = False
 
@@ -49,25 +49,25 @@ class Player(ent.Entity):
         self.rect.x += self.__vel_x 
 
         # Horizontal collisions
-        for tile in tiles:
-            if self.rect.colliderect(tile.rect):
+        for rect in tiles:
+            if self.rect.colliderect(rect):
                 if self.__vel_x > 0:
-                    self.rect.right = tile.rect.left
+                    self.rect.right = rect.left
                 elif self.__vel_x < 0:
-                    self.rect.left = tile.rect.right  
+                    self.rect.left = rect.right  
 
         # Apply vertical movement
         self.rect.y += self.__vel_y
         
         # Vertical collisions
-        for tile in tiles:
-            if self.rect.colliderect(tile.rect):
+        for rect in tiles:
+            if self.rect.colliderect(rect):
                 if self.__vel_y > 0:
-                    self.rect.bottom = tile.rect.top
+                    self.rect.bottom = rect.top
                     self.__vel_y = 0
                     self.__on_ground = True
                 elif self.__vel_y < 0:
-                    self.rect.top = tile.rect.bottom
+                    self.rect.top = rect.bottom
                     self.__vel_y = 0
 
 

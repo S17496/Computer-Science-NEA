@@ -10,7 +10,7 @@ class Camera:
     # Getters and setters
 
     def get_x(self) -> int:
-        return self.__x
+        return round(self.__x)
 
     def get_y(self) -> int:
-        return self.__y
+        return round(self.__y)
