@@ -25,41 +25,49 @@ def handle_left_click(player: p.Player) -> None:
 
     # Breaking blocks
     global breakstart, break_target
-    if isinstance(player.get_inventory().get_selected_item(), items.Pickaxe):
-        break_time = int(2000/player.get_inventory().get_selected_item().get_pickaxe_speed())
-        mouse_pos = pygame.mouse.get_pos()
-        tile_coordinates = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
-        chunk_coordinates = world.which_chunk(tile_coordinates)
-        coordinates_in_chunk = world.where_in_chunk(tile_coordinates)
 
-        tile_id = world.get_chunk(chunk_coordinates).get_tile_id(coordinates_in_chunk)
-        item_id = world.get_item_id(str(tile_id))
+    selected_item = player.get_inventory().get_selected_item()
 
-        if tile_id >= 0:
-            if breakstart == None:
-                breakstart = pygame.time.get_ticks()
-                break_target = tile_coordinates
+    if not isinstance(selected_item, items.Pickaxe):
+        return None
     
-            elapsed = pygame.time.get_ticks() - breakstart
+    mouse_pos = pygame.mouse.get_pos()
+    tile_coordinates = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
+
+    chunk_coordinates = world.which_chunk(tile_coordinates)
+    coordinates_in_chunk = world.where_in_chunk(tile_coordinates)
+
+    if chunk_coordinates not in world.get_chunks():
+        return None
     
-            if tile_coordinates != break_target:
-                breakstart = None
-                break_target = None 
+    tile_id = world.get_chunk(chunk_coordinates).get_tile_id(coordinates_in_chunk)
+    item_id = world.get_item_id(str(tile_id))
+
+    if tile_id < 0:
+        return None
+
+    break_time = int(1000 / selected_item.get_pickaxe_speed())
+  
+    if breakstart is None or tile_coordinates != break_target:
+        breakstart = pygame.time.get_ticks()
+        break_target = tile_coordinates
+
+    elapsed = pygame.time.get_ticks() - breakstart
     
-            if elapsed >= break_time and break_target != None:
-                tile_item_entity = ent.ItemEntity(tile_coordinates[0] * conf.TILE_SIZE, tile_coordinates[1] * conf.TILE_SIZE, tile_data[item_id]["dropped_texture"], items.TileItem(item_id, 1))
-                item_entities.add(tile_item_entity)
-                world.break_tile(tile_coordinates)
-                breakstart = None
-                break_target = None
+    if elapsed >= break_time and break_target != None:
+        tile_item_entity = ent.ItemEntity(tile_coordinates[0] * conf.TILE_SIZE, tile_coordinates[1] * conf.TILE_SIZE, tile_data[item_id]["dropped_texture"], items.TileItem(item_id, 1))
+        item_entities.add(tile_item_entity)
+        world.break_tile(tile_coordinates)
+        breakstart = None
+        break_target = None
     
-    elif isinstance(player.get_inventory().get_selected_item(), p.TileItem):
-        mouse_pos = pygame.mouse.get_pos()
-        tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
-        if tile_pos not in world._tile_dic:
-            # PLACE BLOCK CODE
-            item = player.get_inventory().get_selected_item()
-            item.set_quantity(item.get_quantity()-1)
+    #if isinstance(player.get_inventory().get_selected_item(), p.TileItem):
+    #    mouse_pos = pygame.mouse.get_pos()
+    #    tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
+    #    if tile_pos not in world._tile_dic:
+    #        # PLACE BLOCK CODE
+    #        item = player.get_inventory().get_selected_item()
+    #        item.set_quantity(item.get_quantity()-1)
     
 
 
