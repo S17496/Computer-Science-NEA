@@ -101,8 +101,9 @@ item_entities = pygame.sprite.Group()
 # Temporary pickaxe giver
 player1.get_inventory().add_item(items.Pickaxe("100", 1))
 
-# Variable used for breaking blocks
+# Variables used for breaking blocks
 breakstart = None 
+break_target = None
 
 # Main loop
 running = True
