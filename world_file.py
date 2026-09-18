@@ -22,7 +22,7 @@ class PerlinNoise:
         random.seed(self.__seed + x)
         return random.choice([1, -1])
     
-    def noise(self, x):
+    def noise1D(self, x):
         cell_info = self.get_cell_info(x)
 
         left = cell_info[0]
@@ -40,6 +40,36 @@ class PerlinNoise:
         fade = self.fade(distance_left)
 
         return self.lerp(left_influence, right_influence, fade)
+
+    def noise2D(self, x, y):
+        return 
+
+class Worm:
+    def __init__(self, seed, x, y) -> None:
+        self.__seed = seed 
+        self.__x = x 
+        self.__y = y 
+        self.__rng = random.Random(seed)
+        self.__angle = self.__rng.uniform(0, math.pi)
+
+    def step(self) -> None:
+        self.__angle += self.__rng.uniform(-0.3, 0.3)
+        self.__x += math.cos(self.__angle)
+        self.__y += math.sin(self.__angle)
+
+    def get_x(self):
+        return self.__x
+
+    def get_y(self):
+        return self.__y
+
+    
+
+
+
+
+    
+
 
 class Chunk:
     def __init__(self, coordinates: tuple) -> None:
@@ -100,7 +130,9 @@ class Chunk:
 
 class World:
     # Constructor
-    def __init__(self, noise1d: PerlinNoise) -> None:
+    def __init__(self, seed) -> None:
+        self.__perlin_noise = PerlinNoise(seed)
+
         with open("tile_data.json", "r") as tile_data:
             self.__tile_data = json.load(tile_data)
 
@@ -109,13 +141,14 @@ class World:
             texture_path = self.__tile_data[tile_id]["texture"]
             self.__tile_data[tile_id]["texture"] = pygame.image.load(texture_path).convert_alpha()
 
-        self.__chunks = self.generate_world(self.generate_surface_heights(noise1d, 15, 25))
+        self.__chunks = self.generate_world(self.generate_surface_heights(self.__perlin_noise, 15, 25))
+        self.generate_caves()
 
 
     def generate_surface_heights(self, noise1d: PerlinNoise, period: int, amplitude: int) -> list:
         heights = []
         for x in range(conf.CHUNK_SIZE * conf.WORLD_WIDTH):
-            heights.append(int((noise1d.noise(x/period) + 1) * amplitude))
+            heights.append(int((noise1d.noise1D(x/period) + 1) * amplitude))
         return heights
 
     def generate_world(self, heights: list) -> dict:
@@ -132,6 +165,30 @@ class World:
                 chunk.rebuild_surface(self.__tile_data)
                 world_data[(x_chunk, y_chunk)] = chunk                
         return world_data
+    
+    def carve_circle(self, center_x, center_y, radius):
+        for x in range(center_x - radius, center_x + radius + 1):
+            for y in range(center_y - radius, center_y + radius + 1):
+
+                if (x - center_x) ** 2 + (y - center_y) ** 2 > radius ** 2:
+                    continue
+
+                chunk_coords = self.which_chunk((x, y))
+
+                if chunk_coords not in self.__chunks:
+                    continue
+
+                chunk = self.__chunks[chunk_coords]
+
+                coords_in_chunk = self.where_in_chunk((x, y))
+
+                chunk.change_tile(coords_in_chunk, -1)
+
+    def generate_caves(self):
+        worm = Worm(1234, 640, 0)
+        for _ in range(1000):
+            self.carve_circle(int(worm.get_x()) , int(worm.get_y()), 10)
+            worm.step()
 
 
     def which_chunk(self, tile_coordinates: tuple) -> tuple:

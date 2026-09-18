@@ -18,7 +18,7 @@ def handle_slot_switching(event, player: p.Player) -> None:
     
 
 def handle_key_event(event, player: p.Player) -> None:
-    if event.key in [48, 49, 50, 51, 52, 53, 54, 55, 56, 57]:
+    if event.key in (48, 49, 50, 51, 52, 53, 54, 55, 56, 57):
         handle_slot_switching(event, player)
 
 def handle_left_click(player: p.Player) -> None:
@@ -112,7 +112,7 @@ while running:
 
 
     # Allows only nearby tiles to be checked for collisions
-    nearby_tiles = world.get_nearby_rects(player1.rect, 3, 4)
+    nearby_tiles = world.get_nearby_rects(player1.rect, 10, 10)
     player1.update(nearby_tiles)
     
 
