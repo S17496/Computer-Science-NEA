@@ -29,6 +29,8 @@ def handle_left_click(player: p.Player) -> None:
     selected_item = player.get_inventory().get_selected_item()
 
     if not isinstance(selected_item, items.Pickaxe):
+        breakstart = None
+        break_target = None
         return None
     
     mouse_pos = pygame.mouse.get_pos()
@@ -38,13 +40,18 @@ def handle_left_click(player: p.Player) -> None:
     coordinates_in_chunk = world.where_in_chunk(tile_coordinates)
 
     if chunk_coordinates not in world.get_chunks():
+        breakstart = None
+        break_target = None
         return None
     
     tile_id = world.get_chunk(chunk_coordinates).get_tile_id(coordinates_in_chunk)
-    item_id = world.get_item_id(str(tile_id))
 
     if tile_id < 0:
+        breakstart = None
+        break_target = None
         return None
+
+    item_id = world.get_item_id(str(tile_id))
 
     break_time = int(1000 / selected_item.get_pickaxe_speed())
   
@@ -72,6 +79,9 @@ def handle_left_click(player: p.Player) -> None:
 
 
 def handle_events(player) -> bool:
+
+    global break_target, breakstart  # For mining
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False
@@ -79,9 +89,14 @@ def handle_events(player) -> bool:
             handle_key_event(event, player)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pass
-        elif pygame.mouse.get_pressed()[0]:
-            handle_left_click(player)
-    return True
+
+    if pygame.mouse.get_pressed()[0]:
+        handle_left_click(player)
+    else:
+        breakstart = None
+        break_target = None
+
+    return True  # Keeps main loop running
 
 # Pygame Initialisations
 pygame.init()
@@ -90,9 +105,8 @@ clock = pygame.time.Clock()
 
 
 # Creating objects
-noise1d = w.PerlinNoise(0)
 player1 = p.Player(conf.TILE_SIZE * 500, 0, "player.png")
-world = w.World(noise1d)
+world = w.World(1)
 font = pygame.font.Font(None, 32)
 inventory_ui = invUI.InventoryUI(font)
 camera = cam.Camera()
