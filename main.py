@@ -21,7 +21,7 @@ def drop_tile(tile_coordinates, item_id):
     )
     item_entities.add(tile_item_entity)
 
-# Pygame Initialisations
+# Pygame initialisations
 pygame.init()
 screen = pygame.display.set_mode((conf.SCREEN_WIDTH, conf.SCREEN_HEIGHT))
 clock = pygame.time.Clock()
