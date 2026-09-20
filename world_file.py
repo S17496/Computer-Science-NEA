@@ -1,6 +1,5 @@
 import pygame
 import config_file as conf
-from tile_file import Tile
 import math
 import random
 import json
@@ -42,7 +41,48 @@ class PerlinNoise:
         return self.lerp(left_influence, right_influence, fade)
 
     def noise2D(self, x, y):
-        return 
+        x_cell = self.get_cell_info(x)
+        y_cell = self.get_cell_info(y)
+
+        x0 = x_cell[0]
+        x1 = x0 + 1
+
+        y0 = y_cell[0]
+        y1 = y0 + 1
+
+        dx = x_cell[1]
+        dy = y_cell[1]
+
+        gradients = []
+
+        for x in (x0, x1):
+            for y in (y0, y1):
+
+                # Hashing algorithm to avoid collisions
+                value = self.__seed ^ (x * 614807543)
+                value ^= y * 931469120
+                value = (value ^ (value >> 13)) * 961379052
+
+                gradient = ((1, 0),(-1, 0),(0, 1),(0, -1),(math.sqrt(2) / 2, math.sqrt(2) / 2),(-math.sqrt(2) / 2, math.sqrt(2) / 2),(math.sqrt(2) / 2, -math.sqrt(2) / 2),(-math.sqrt(2) / 2, -math.sqrt(2) / 2))[value % 8]
+                gradients.append(gradient)
+
+        bottom_left_distance = (dx, dy)
+        bottom_right_distance = (dx - 1, dy)
+        top_left_distance = (dx, dy - 1)
+        top_right_distance = (dx - 1, dy - 1)
+
+        bottom_left_influence = bottom_left_distance[0] * gradients[0][0] + bottom_left_distance[1] * gradients[0][1]
+        bottom_right_influence = bottom_right_distance[0] * gradients[2][0] + bottom_right_distance[1] * gradients[2][1]
+        top_left_influence = top_left_distance[0] * gradients[1][0] + top_left_distance[1] * gradients[1][1]
+        top_right_influence = top_right_distance[0] * gradients[3][0] + top_right_distance[1] * gradients[3][1]
+
+        fade_x = self.fade(dx)
+        fade_y = self.fade(dy)
+
+        bottom = self.lerp(bottom_left_influence, bottom_right_influence, fade_x)
+        top = self.lerp(top_left_influence, top_right_influence, fade_x)
+
+        return self.lerp(bottom, top, fade_y)
 
 class Worm:
     def __init__(self, seed, x, y) -> None:

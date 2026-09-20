@@ -2,6 +2,7 @@ import pygame
 import inventory_file as inv
 import entity_file as ent
 import items_file as items
+import config_file as conf
 
 
 class Player(ent.Entity):
@@ -16,7 +17,7 @@ class Player(ent.Entity):
         self.__vel_x = 0
         self.__vel_y = 0
         self.__speed = 5
-        self.__gravity = 0.5
+        self.__gravity = conf.GRAVITY
         self.__jump_strength = -14
         self.__on_ground = False
 
@@ -29,7 +30,7 @@ class Player(ent.Entity):
         self.__inventory.add_item(item)
 
 
-    def update(self, tiles: list) -> None:
+    def update(self, tiles: list, item_entities: list) -> None:
         keys = pygame.key.get_pressed()
 
         # Horizontal movement
@@ -69,5 +70,13 @@ class Player(ent.Entity):
                 elif self.__vel_y < 0:
                     self.rect.top = rect.bottom
                     self.__vel_y = 0
+
+        # Item pickup. MAKE IT SO THAT ITEMS ON GROUND CAN STACK
+        for dropped_item in item_entities:
+            if self.rect.colliderect(dropped_item.rect):
+                item = dropped_item.get_item()
+                self.__inventory.add_item(item)
+                item_entities.remove(dropped_item)
+
 
 

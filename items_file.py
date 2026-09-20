@@ -1,5 +1,4 @@
 import json
-import tile_file as t
 
 class Item:
     def __init__(self, id: str, quantity: int) -> None:
@@ -30,11 +29,6 @@ class Pickaxe(Item):
         self.__pickaxe_power = item_data["pickaxe_power"]
         self.__pickaxe_speed = item_data["pickaxe_speed"]
 
-    def break_tile(self, tile: t.Tile) -> None:
-        if self.__pickaxe_power > tile.get_hardness():
-            pass 
-            # UNFINISHED
-
     def get_pickaxe_speed(self) -> int:
         return self.__pickaxe_speed
 
@@ -44,6 +38,3 @@ class TileItem(Item):
         with open("item_data.json", "r") as file:
             item_data = json.load(file)[id]
         self.__tile_id = item_data["tile_id"]
-
-    def get_tile(self) -> t.Tile:
-        return self.__tile

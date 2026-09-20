@@ -6,97 +6,20 @@ import camera_file as cam
 import inventoryUI_file as invUI
 import items_file as items
 import entity_file as ent
+import events
 import json
 
 with open("item_data.json", "r") as tile_data:
     tile_data = json.load(tile_data)
 
-
-def handle_slot_switching(event, player: p.Player) -> None:
-    slot_num = (event.key - 39) % 10
-    player.get_inventory().set_selected_slot(slot_num)
-    
-
-def handle_key_event(event, player: p.Player) -> None:
-    if event.key in (48, 49, 50, 51, 52, 53, 54, 55, 56, 57):
-        handle_slot_switching(event, player)
-
-def handle_left_click(player: p.Player) -> None:
-
-    # Breaking blocks
-    global breakstart, break_target
-
-    selected_item = player.get_inventory().get_selected_item()
-
-    if not isinstance(selected_item, items.Pickaxe):
-        breakstart = None
-        break_target = None
-        return None
-    
-    mouse_pos = pygame.mouse.get_pos()
-    tile_coordinates = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
-
-    chunk_coordinates = world.which_chunk(tile_coordinates)
-    coordinates_in_chunk = world.where_in_chunk(tile_coordinates)
-
-    if chunk_coordinates not in world.get_chunks():
-        breakstart = None
-        break_target = None
-        return None
-    
-    tile_id = world.get_chunk(chunk_coordinates).get_tile_id(coordinates_in_chunk)
-
-    if tile_id < 0:
-        breakstart = None
-        break_target = None
-        return None
-
-    item_id = world.get_item_id(str(tile_id))
-
-    break_time = int(1000 / selected_item.get_pickaxe_speed())
-  
-    if breakstart is None or tile_coordinates != break_target:
-        breakstart = pygame.time.get_ticks()
-        break_target = tile_coordinates
-
-    elapsed = pygame.time.get_ticks() - breakstart
-    
-    if elapsed >= break_time and break_target != None:
-        tile_item_entity = ent.ItemEntity(tile_coordinates[0] * conf.TILE_SIZE, tile_coordinates[1] * conf.TILE_SIZE, tile_data[item_id]["dropped_texture"], items.TileItem(item_id, 1))
-        item_entities.add(tile_item_entity)
-        world.break_tile(tile_coordinates)
-        breakstart = None
-        break_target = None
-    
-    #if isinstance(player.get_inventory().get_selected_item(), p.TileItem):
-    #    mouse_pos = pygame.mouse.get_pos()
-    #    tile_pos = (int((mouse_pos[0]+camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1]+camera.get_y())//conf.TILE_SIZE))
-    #    if tile_pos not in world._tile_dic:
-    #        # PLACE BLOCK CODE
-    #        item = player.get_inventory().get_selected_item()
-    #        item.set_quantity(item.get_quantity()-1)
-    
-
-
-def handle_events(player) -> bool:
-
-    global break_target, breakstart  # For mining
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            return False
-        elif event.type == pygame.KEYDOWN:
-            handle_key_event(event, player)
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            pass
-
-    if pygame.mouse.get_pressed()[0]:
-        handle_left_click(player)
-    else:
-        breakstart = None
-        break_target = None
-
-    return True  # Keeps main loop running
+def drop_tile(tile_coordinates, item_id):
+    tile_item_entity = ent.ItemEntity(
+        tile_coordinates[0] * conf.TILE_SIZE,
+        tile_coordinates[1] * conf.TILE_SIZE,
+        tile_data[item_id]["dropped_texture"],
+        items.TileItem(item_id, 1)
+    )
+    item_entities.add(tile_item_entity)
 
 # Pygame Initialisations
 pygame.init()
@@ -105,15 +28,16 @@ clock = pygame.time.Clock()
 
 
 # Creating objects
-player1 = p.Player(conf.TILE_SIZE * 500, 0, "player.png")
-world = w.World(1)
+player = p.Player(conf.TILE_SIZE * 500, 0, "player.png")
+world = w.World(2)
 font = pygame.font.Font(None, 32)
 inventory_ui = invUI.InventoryUI(font)
 camera = cam.Camera()
 item_entities = pygame.sprite.Group()
+event_handler = events.EventHandler(player, world, camera, drop_tile)
 
 # Temporary pickaxe giver
-player1.get_inventory().add_item(items.Pickaxe("100", 1))
+player.get_inventory().add_item(items.Pickaxe("100", 1))
 
 # Variables used for breaking blocks
 breakstart = None 
@@ -122,16 +46,20 @@ break_target = None
 # Main loop
 running = True
 while running:
-    running = handle_events(player1)
+    running = event_handler.handle_events()
 
 
-    # Allows only nearby tiles to be checked for collisions
-    nearby_tiles = world.get_nearby_rects(player1.rect, 10, 10)
-    player1.update(nearby_tiles)
-    
+    # Player logic
+    nearby_tiles = world.get_nearby_rects(player.rect, 10, 10)
+    player.update(nearby_tiles, item_entities)
+
+    # Dropped item logic
+    for dropped_item in item_entities:
+        nearby_tiles = world.get_nearby_rects(dropped_item.rect, 10, 10)
+        dropped_item.update(nearby_tiles)
 
     # Camera movement
-    camera.move_camera(player1.rect.centerx - conf.SCREEN_WIDTH//2, player1.rect.centery - conf.SCREEN_HEIGHT//2)
+    camera.move_camera(player.rect.centerx - conf.SCREEN_WIDTH//2, player.rect.centery - conf.SCREEN_HEIGHT//2)
 
     # Draw background
     screen.fill((0,0,150))
@@ -141,13 +69,13 @@ while running:
         screen.blit(item_entity.image, (item_entity.rect.x - camera.get_x(), item_entity.rect.y - camera.get_y()))
 
     # Draw tiles
-    world.render_world(player1.rect, screen, camera)
+    world.render_world(player.rect, screen, camera)
 
     # Draw player
-    screen.blit(player1.image, (player1.rect.x - camera.get_x(), player1.rect.y - camera.get_y()))
+    screen.blit(player.image, (player.rect.x - camera.get_x(), player.rect.y - camera.get_y()))
 
     # Draw hotbar
-    inventory_ui.render_hotbar(screen, player1.get_inventory().get_items()[0:conf.HOTBAR_SIZE], player1.get_inventory().get_selected_slot())
+    inventory_ui.render_hotbar(screen, player.get_inventory().get_items()[0:conf.HOTBAR_SIZE], player.get_inventory().get_selected_slot())
    
     pygame.display.update()
     # 60 FPS

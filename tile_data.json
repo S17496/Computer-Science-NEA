@@ -2,16 +2,24 @@
     "0": {
             "name": "Dirt",
             "texture": "assets/tiles/dirt.png",
-            "breakable": true,
             "required_pickaxe_power": 0,
             "hardness": 1,
-            "drops": 
-                {
-                    "item_id": "0",
-                    "amount": 1
-                }
-            
-        }
-    
-        
+            "item_id": "0"
+        },
+
+    "1": {
+            "name": "Stone",
+            "texture": "assets/tiles/stone.png",
+            "required_pickaxe_power": 0,
+            "hardness": 1,
+            "item_id": "1"
+        },
+
+    "2": {
+            "name": "Iron Ore",
+            "texture": "assets/tiles/iron_ore.png",
+            "required_pickaxe_power": 0,
+            "hardness": 1,
+            "item_id": "2"        
     }
+}

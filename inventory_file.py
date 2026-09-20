@@ -21,12 +21,12 @@ class Inventory:
             if self.__items[i] != None:
                 if item.get_name() == self.__items[i].get_name() and self.__items[i].get_quantity() < self.__items[i].get_max_stack():
                     self.__items[i].set_quantity(self.__items[i].get_quantity() + 1)
-                    break
+                    return
         else:
             for i in range(conf.INVENTORY_SIZE):
                 if self.__items[i] == None:
                     self.__items[i] = item
-                    break
+                    return
 
     def get_selected_slot(self) -> int:
         return self.__selected_slot
