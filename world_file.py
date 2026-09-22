@@ -165,7 +165,7 @@ class World:
     def __init__(self, seed) -> None:
         self.__seed = seed
         self.__perlin_noise = PerlinNoise(seed)
-        self.__surface_heights = self.generate_surface_heights(self.__perlin_noise, 25, 25, 4)
+        self.__surface_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2, self.__perlin_noise, 25, 25, 4)
 
         with open("tile_data.json", "r") as tile_data:
             self.__tile_data = json.load(tile_data)
@@ -179,10 +179,9 @@ class World:
         self.generate_caves()
 
 
-    def generate_surface_heights(self, noise: PerlinNoise, period: int, amplitude: int, layers: int) -> list:
+    def generate_heights(self, base_height: int, noise: PerlinNoise, period: int, amplitude: int, layers: int) -> list:
+        
         heights = []
-
-        base_height = conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2
 
         for x in range(conf.CHUNK_SIZE * conf.WORLD_WIDTH):
             height = 0
@@ -201,6 +200,7 @@ class World:
             heights.append(height)
 
         return heights
+
 
     def generate_world(self, heights: list) -> dict:
         world_data = {}
@@ -245,6 +245,9 @@ class World:
             for _ in range(rng.randrange(500, 1000)):
                 self.carve_circle(int(worm.get_x()) , int(worm.get_y()), rng.randrange(5, 8))
                 worm.step()
+
+
+    
 
 
     def which_chunk(self, tile_coordinates: tuple) -> tuple:
