@@ -307,7 +307,7 @@ class World:
         return self.__chunks[coordinates]
 
     def get_item_id(self, tile_id: str) -> str:
-        return self.__tile_data[tile_id]["drops"]["item_id"]
+        return self.__tile_data[tile_id]["item_id"]
 
     def get_chunks(self) -> dict:
         return self.__chunks
