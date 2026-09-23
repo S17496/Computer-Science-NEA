@@ -105,7 +105,7 @@ class Worm:
     
 class Chunk:
     def __init__(self, coordinates: tuple) -> None:
-        self.__tiles = [[0 for _ in range(conf.CHUNK_SIZE)] for _ in range(conf.CHUNK_SIZE)]
+        self.__tiles = [[1 for _ in range(conf.CHUNK_SIZE)] for _ in range(conf.CHUNK_SIZE)]
 
         self.__coordinates = coordinates
 
@@ -165,7 +165,9 @@ class World:
     def __init__(self, seed) -> None:
         self.__seed = seed
         self.__perlin_noise = PerlinNoise(seed)
+
         self.__surface_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2, self.__perlin_noise, 25, 25, 4)
+        self.__stone_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2 + 25, self.__perlin_noise, 40, 12, 3)
 
         with open("tile_data.json", "r") as tile_data:
             self.__tile_data = json.load(tile_data)
@@ -175,7 +177,7 @@ class World:
             texture_path = self.__tile_data[tile_id]["texture"]
             self.__tile_data[tile_id]["texture"] = pygame.image.load(texture_path).convert_alpha()
 
-        self.__chunks = self.generate_world(self.__surface_heights)
+        self.__chunks = self.generate_world(self.__surface_heights, self.__stone_heights)
         self.generate_caves()
 
 
@@ -202,17 +204,27 @@ class World:
         return heights
 
 
-    def generate_world(self, heights: list) -> dict:
+    def generate_world(self, surface_heights: list, stone_heights: list) -> dict:
         world_data = {}
         for x_chunk in range(conf.WORLD_WIDTH):
             for y_chunk in range(conf.WORLD_HEIGHT):
+
                 chunk = Chunk((x_chunk, y_chunk))
+
                 for x in range(conf.CHUNK_SIZE):
                     for y in range(conf.CHUNK_SIZE):
+
                         x_coordinate = x + x_chunk * conf.CHUNK_SIZE
                         y_coordinate = y + y_chunk * conf.CHUNK_SIZE
-                        if y_coordinate < heights[x_coordinate]:
-                            chunk.change_tile((x, y), -1)
+
+                        if y_coordinate < surface_heights[x_coordinate]:
+                            tile_id = -1
+                        elif y_coordinate < stone_heights[x_coordinate]:
+                            tile_id = 0
+                        else:
+                            break
+
+                        chunk.change_tile((x, y), tile_id)
                 chunk.rebuild_surface(self.__tile_data)
                 world_data[(x_chunk, y_chunk)] = chunk                
         return world_data
@@ -225,14 +237,10 @@ class World:
                     continue
 
                 chunk_coords = self.which_chunk((x, y))
-
                 if chunk_coords not in self.__chunks:
                     continue
-
                 chunk = self.__chunks[chunk_coords]
-
                 coords_in_chunk = self.where_in_chunk((x, y))
-
                 chunk.change_tile(coords_in_chunk, -1)
 
     def generate_caves(self) -> None:
