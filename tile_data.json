@@ -19,7 +19,7 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "2",
-        "threshold": 0.72
+        "ore_threshold": 0.72
     },
     "3": {
         "name": "Iron Ore",
@@ -27,7 +27,7 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "3",
-        "threshold": 0.72
+        "ore_threshold": 0.72
     },
     "4": {
         "name": "Diamond Ore",
@@ -35,6 +35,6 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "4",
-        "threshold": 0.72
+        "ore_threshold": 0.72
     }
 }

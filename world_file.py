@@ -166,8 +166,8 @@ class World:
         self.__seed = seed
         self.__perlin_noise = PerlinNoise(seed)
 
-        self.__surface_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2, self.__perlin_noise, 25, 25, 4)
-        self.__stone_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2 + 25, self.__perlin_noise, 40, 12, 3)
+        self.__surface_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2, 25, 25, 4)
+        self.__stone_heights = self.generate_heights(conf.WORLD_HEIGHT * conf.CHUNK_SIZE // 2 + 25, 40, 12, 3)
 
         with open("tile_data.json", "r") as tile_data:
             self.__tile_data = json.load(tile_data)
@@ -177,11 +177,12 @@ class World:
             texture_path = self.__tile_data[tile_id]["texture"]
             self.__tile_data[tile_id]["texture"] = pygame.image.load(texture_path).convert_alpha()
 
-        self.__chunks = self.generate_world(self.__surface_heights, self.__stone_heights)
+        self.__chunks = self.create_world(self.__surface_heights, self.__stone_heights)
         self.generate_caves()
+        self.generate_ore(2, 0.01)
 
 
-    def generate_heights(self, base_height: int, noise: PerlinNoise, period: int, amplitude: int, layers: int) -> list:
+    def generate_heights(self, base_height: int, period: int, amplitude: int, layers: int) -> list:
         
         heights = []
 
@@ -192,7 +193,7 @@ class World:
             maximum_amplitude = 0
 
             for _ in range(layers):
-                height += noise.noise1D(x / period * frequency) * octave_amplitude
+                height += self.__perlin_noise.noise1D(x / period * frequency) * octave_amplitude
                 maximum_amplitude += octave_amplitude
                 octave_amplitude *= 0.5
                 frequency *= 2
@@ -204,7 +205,7 @@ class World:
         return heights
 
 
-    def generate_world(self, surface_heights: list, stone_heights: list) -> dict:
+    def create_world(self, surface_heights: list, stone_heights: list) -> dict:
         world_data = {}
         for x_chunk in range(conf.WORLD_WIDTH):
             for y_chunk in range(conf.WORLD_HEIGHT):
@@ -228,6 +229,7 @@ class World:
                 chunk.rebuild_surface(self.__tile_data)
                 world_data[(x_chunk, y_chunk)] = chunk                
         return world_data
+
     
     def carve_circle(self, center_x, center_y, radius):
         for x in range(center_x - radius, center_x + radius + 1):
@@ -254,11 +256,43 @@ class World:
                 self.carve_circle(int(worm.get_x()) , int(worm.get_y()), rng.randrange(5, 8))
                 worm.step()
 
-    def generate_ores(self) -> None:
+
+    def generate_ore(self, ore: int, ore_threshold) -> None:
+        
         for chunk_coordinates in self.__chunks:
             chunk = self.__chunks[chunk_coordinates]
+
             for x in range(conf.CHUNK_SIZE):
                 for y in range(conf.CHUNK_SIZE):
+                    world_x = chunk_coordinates[0] * conf.CHUNK_SIZE + x 
+                    world_y = chunk_coordinates[1] * conf.CHUNK_SIZE + y 
+
+                    noise_value = self.__perlin_noise.noise2D(world_x/10, world_y/10)
+                    if abs(noise_value) <= ore_threshold and chunk.get_tile_id((x, y)) == 1:
+                        chunk.change_tile((x, y), ore)
+
+
+
+    def generate_ore_data(self) -> list:
+
+        ores_data = []
+
+        for tile_id in self.__tile_data:
+
+            ore_data = self.__tile_data[tile_id]
+            if "ore_threshold" in ore_data:
+                ores_data.append((int(tile_id), ore_data["ore_threshold"]))
+
+        return ores_data
+
+
+
+
+
+
+
+
+
                     
 
 
