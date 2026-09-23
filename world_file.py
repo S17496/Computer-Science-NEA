@@ -254,6 +254,14 @@ class World:
                 self.carve_circle(int(worm.get_x()) , int(worm.get_y()), rng.randrange(5, 8))
                 worm.step()
 
+    def generate_ores(self) -> None:
+        for chunk_coordinates in self.__chunks:
+            chunk = self.__chunks[chunk_coordinates]
+            for x in range(conf.CHUNK_SIZE):
+                for y in range(conf.CHUNK_SIZE):
+                    
+
+
 
     
 

@@ -1,25 +1,40 @@
 {
     "0": {
-            "name": "Dirt",
-            "texture": "assets/tiles/dirt.png",
-            "required_pickaxe_power": 0,
-            "hardness": 1,
-            "item_id": "0"
-        },
-
+        "name": "Dirt",
+        "texture": "assets/tiles/dirt.png",
+        "required_pickaxe_power": 0,
+        "hardness": 1,
+        "item_id": "0"
+    },
     "1": {
-            "name": "Stone",
-            "texture": "assets/tiles/stone.png",
-            "required_pickaxe_power": 0,
-            "hardness": 1,
-            "item_id": "1"
-        },
-
+        "name": "Stone",
+        "texture": "assets/tiles/stone.png",
+        "required_pickaxe_power": 0,
+        "hardness": 1,
+        "item_id": "1"
+    },
     "2": {
-            "name": "Iron Ore",
-            "texture": "assets/tiles/iron_ore.png",
-            "required_pickaxe_power": 0,
-            "hardness": 1,
-            "item_id": "2"        
+        "name": "Copper Ore",
+        "texture": "assets/tiles/copper_ore.png",
+        "required_pickaxe_power": 0,
+        "hardness": 1,
+        "item_id": "2",
+        "threshold": 0.72
+    },
+    "3": {
+        "name": "Iron Ore",
+        "texture": "assets/tiles/iron_ore.png",
+        "required_pickaxe_power": 0,
+        "hardness": 1,
+        "item_id": "3",
+        "threshold": 0.72
+    },
+    "4": {
+        "name": "Diamond Ore",
+        "texture": "assets/tiles/diamond_ore.png",
+        "required_pickaxe_power": 0,
+        "hardness": 1,
+        "item_id": "4",
+        "threshold": 0.72
     }
 }

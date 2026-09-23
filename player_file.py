@@ -46,30 +46,38 @@ class Player(ent.Entity):
         self.__vel_y += self.__gravity
         self.__on_ground = False
 
-        # Apply horizontal movement
-        self.rect.x += self.__vel_x 
 
-        # Horizontal collisions
-        for rect in tiles:
-            if self.rect.colliderect(rect):
-                if self.__vel_x > 0:
-                    self.rect.right = rect.left
-                elif self.__vel_x < 0:
-                    self.rect.left = rect.right  
+        # Apply horizontal movement
+        for _ in range(abs(int(self.__vel_x))):
+            if self.__vel_x > 0:
+                self.rect.x += 1
+            elif self.__vel_x < 0:
+                self.rect.x -= 1
+            # Horizontal collisions
+            for rect in tiles:
+                if self.rect.colliderect(rect):
+                    if self.__vel_x > 0:
+                        self.rect.right = rect.left
+                    elif self.__vel_x < 0:
+                        self.rect.left = rect.right
 
         # Apply vertical movement
-        self.rect.y += self.__vel_y
-        
-        # Vertical collisions
-        for rect in tiles:
-            if self.rect.colliderect(rect):
-                if self.__vel_y > 0:
-                    self.rect.bottom = rect.top
-                    self.__vel_y = 0
-                    self.__on_ground = True
-                elif self.__vel_y < 0:
-                    self.rect.top = rect.bottom
-                    self.__vel_y = 0
+        for _ in range(abs(int(self.__vel_y))):
+            if self.__vel_y > 0:
+                self.rect.y += 1
+            elif self.__vel_y < 0:
+                self.rect.y -= 1
+            # Vertical collisions
+            for rect in tiles:
+                if self.rect.colliderect(rect):
+                    if self.__vel_y > 0:
+                        self.rect.bottom = rect.top
+                        self.__vel_y = 0
+                        self.__on_ground = True
+                    elif self.__vel_y < 0:
+                        self.rect.top = rect.bottom
+                        self.__vel_y = 0
+
 
         # Item pickup. MAKE IT SO THAT ITEMS ON GROUND CAN STACK
         for dropped_item in item_entities:
