@@ -17,16 +17,29 @@ class Inventory:
         return self.__items
 
     def add_item(self, item: items.Item) -> None:
-        for i in range(conf.INVENTORY_SIZE):
-            if self.__items[i] != None:
-                if item.get_name() == self.__items[i].get_name() and self.__items[i].get_quantity() < self.__items[i].get_max_stack():
-                    self.__items[i].set_quantity(self.__items[i].get_quantity() + 1)
+
+        for slot_item in self.__items:
+            if slot_item is not None and slot_item.get_name() == item.get_name():
+
+                free_space = slot_item.get_max_stack() - slot_item.get_quantity()
+                transfer = min(free_space, item.get_quantity())
+
+                slot_item.set_quantity(slot_item.get_quantity() + transfer)
+                item.set_quantity(item.get_quantity() - transfer)
+
+                if item.get_quantity() == 0:
                     return
-        else:
-            for i in range(conf.INVENTORY_SIZE):
-                if self.__items[i] == None:
-                    self.__items[i] = item
-                    return
+
+        for i in range(len(self.__items)):
+            if self.__items[i] is None:
+
+                self.__items[i] = item.copy()
+                item.set_quantity(0)
+                return
+
+
+        
+
 
     def get_selected_slot(self) -> int:
         return self.__selected_slot

@@ -2,6 +2,7 @@ import json
 
 class Item:
     def __init__(self, id: str, quantity: int) -> None:
+        self._id = id
         with open("item_data.json", "r") as file:
             item_data = json.load(file)[id]
         self._name = item_data["name"]
@@ -20,6 +21,12 @@ class Item:
 
     def set_quantity(self, quantity: str) -> None:
         self._quantity = quantity
+
+    def get_id(self) -> str:
+        return self._id
+
+    def copy(self):
+        return self.__class__(self._id, self._quantity)
 
 class Pickaxe(Item):
     def __init__(self, id: str, quantity: int) -> None:

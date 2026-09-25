@@ -29,6 +29,12 @@ class Player(ent.Entity):
     def update_inventory(self, item: items.Item) -> None:
         self.__inventory.add_item(item)
 
+    def get_top_left_coordinates(self) -> tuple:
+        return (self.rect.x // conf.TILE_SIZE, self.rect.y // conf.TILE_SIZE)
+
+    def get_bottom_right_coordinates(self) -> tuple:
+        return ((self.rect.x + conf.PLAYER_WIDTH) // conf.TILE_SIZE, (self.rect.y + conf.PLAYER_HEIGHT) // conf.TILE_SIZE)
+
 
     def update(self, tiles: list, item_entities: list) -> None:
         keys = pygame.key.get_pressed()
@@ -84,7 +90,7 @@ class Player(ent.Entity):
             if self.rect.colliderect(dropped_item.rect):
                 item = dropped_item.get_item()
                 self.__inventory.add_item(item)
-                item_entities.remove(dropped_item)
+
 
 
 

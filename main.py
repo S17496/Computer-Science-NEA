@@ -56,7 +56,7 @@ while running:
     # Dropped item logic
     for dropped_item in item_entities:
         nearby_tiles = world.get_nearby_rects(dropped_item.rect, 10, 10)
-        dropped_item.update(nearby_tiles)
+        dropped_item.update(nearby_tiles, item_entities)
 
     # Camera movement
     camera.move_camera(player.rect.centerx - conf.SCREEN_WIDTH//2, player.rect.centery - conf.SCREEN_HEIGHT//2)
