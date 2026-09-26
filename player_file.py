@@ -84,12 +84,21 @@ class Player(ent.Entity):
                         self.rect.top = rect.bottom
                         self.__vel_y = 0
 
-
-        # Item pickup. MAKE IT SO THAT ITEMS ON GROUND CAN STACK
+        # Item pickup
         for dropped_item in item_entities:
             if self.rect.colliderect(dropped_item.rect):
                 item = dropped_item.get_item()
                 self.__inventory.add_item(item)
+
+        # Remove items with no count
+        items = self.__inventory.get_items()
+        for i in range(len(items)):
+
+            if items[i] is None:
+                continue 
+
+            if items[i].get_quantity() == 0:
+                self.__inventory.remove_item(i)
 
 
 

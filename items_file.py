@@ -19,7 +19,7 @@ class Item:
     def get_max_stack(self) -> int:
         return self._max_stack
 
-    def set_quantity(self, quantity: str) -> None:
+    def set_quantity(self, quantity: int) -> None:
         self._quantity = quantity
 
     def get_id(self) -> str:

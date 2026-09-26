@@ -30,13 +30,13 @@ class EventHandler:
         player_pos1 = self.__player.get_top_left_coordinates()
         player_pos2 = self.__player.get_bottom_right_coordinates()
 
-        if not isinstance(self.__player.get_inventory().get_selected_item(), p.TileItem):
+        if not isinstance(self.__player.get_inventory().get_selected_item(), items.TileItem):
             return 
         
         mouse_pos = pygame.mouse.get_pos()
         tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//conf.TILE_SIZE))
 
-        if tile_coordinates[0] >= player_pos1[0] and tile_coordinates[0] <= player_pos2[0] or tile_coordinates[1] >= player_pos1[1] and tile_coordinates[1] <= player_pos2[1]:
+        if tile_coordinates[0] >= player_pos1[0] and tile_coordinates[0] <= player_pos2[0] and tile_coordinates[1] >= player_pos1[1] and tile_coordinates[1] <= player_pos2[1]:
             return 
         
         chunk_coordinates = self.__world.which_chunk(tile_coordinates)
@@ -112,7 +112,7 @@ class EventHandler:
         else:
             self.reset_mining()
 
-        if pygame.mouse.get_pressed()[1]:
+        if pygame.mouse.get_pressed()[2]:
             self.handle_hold_right_click()
 
         return True  # Keeps main loop running

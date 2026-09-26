@@ -1,17 +1,53 @@
 {
     "0" : {
         "name": "Dirt",
-        "type": "block",
-        "max_stack": 999,
+        "type": "tile",
+        "max_stack": 9999,
         "inventory_texture": "assets/items/dirt.png",
         "tile_id": "0", 
         "dropped_texture": "assets/item_entities/dirt.png"     
     },
 
+    "1" : {
+        "name": "Stone",
+        "type": "tile",
+        "max_stack": 9999,
+        "inventory_texture": "assets/items/stone.png",
+        "tile_id": "1",
+        "dropped_texture": "assets/item_entities/stone.png"
+    },
+
+    "2" : {
+        "name": "Copper Ore",
+        "type": "tile",
+        "max_stack": 9999,
+        "inventory_texture": "assets/items/copper_ore.png",
+        "tile_id": "2",
+        "dropped_texture": "assets/item_entities/copper_ore.png"
+    },
+
+    "3" : {
+        "name": "Iron Ore",
+        "type": "tile",
+        "max_stack": 9999,
+        "inventory_texture": "assets/items/iron_ore.png",
+        "tile_id": "3",
+        "dropped_texture": "assets/item_entities/iron_ore.png"
+    },
+
+    "4" : {
+        "name": "Diamond Ore",
+        "type": "block",
+        "max_stack": 9999,
+        "inventory_texture": "assets/items/diamond_ore.png",
+        "tile_id": "4",
+        "dropped_texture": "assets/item_entities/diamond_ore.png"
+    },
+
     "100" : {
         "name": "Copper Pickaxe",
-        "type": "block",
-        "max_stack": 999,
+        "type": "pickaxe",
+        "max_stack": 1,
         "inventory_texture": "assets/items/copper_pickaxe.png",
         "pickaxe_power": 0,
         "pickaxe_speed": 1
