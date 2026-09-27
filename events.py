@@ -5,11 +5,12 @@ import config_file as conf
 import world_file as w
 
 class EventHandler:
-    def __init__(self, player: p.Player, world: w.World, camera, drop_tile):
+    def __init__(self, player: p.Player, world: w.World, camera, drop_tile, inventory_ui):
         self.__player = player 
         self.__world = world 
         self.__camera = camera 
         self.__drop_tile = drop_tile
+        self.__inventory_ui = inventory_ui
         self.__break_target = None 
         self.__break_start = None 
 
@@ -21,9 +22,15 @@ class EventHandler:
         slot_num = (event.key - 39) % 10
         self.__player.get_inventory().set_selected_slot(slot_num)
 
+    def handle_inventory_state(self) -> None:
+        self.__inventory_ui.change_state()
+
     def handle_key_event(self, event) -> None:
         if event.key in range(48, 58):
             self.handle_slot_switching(event)
+        elif event.key == pygame.K_e:
+            self.handle_inventory_state()
+
 
     def handle_hold_right_click(self) -> None:
 

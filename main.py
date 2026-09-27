@@ -16,7 +16,7 @@ def drop_tile(tile_coordinates, item_id):
     tile_item_entity = ent.ItemEntity(
         tile_coordinates[0] * conf.TILE_SIZE,
         tile_coordinates[1] * conf.TILE_SIZE,
-        tile_data[item_id]["dropped_texture"],
+        tile_data[item_id]["texture"],
         items.TileItem(item_id, 1)
     )
     item_entities.add(tile_item_entity)
@@ -34,10 +34,11 @@ font = pygame.font.Font(None, 32)
 inventory_ui = invUI.InventoryUI(font)
 camera = cam.Camera()
 item_entities = pygame.sprite.Group()
-event_handler = events.EventHandler(player, world, camera, drop_tile)
+event_handler = events.EventHandler(player, world, camera, drop_tile, inventory_ui)
 
 # Temporary pickaxe giver
 player.get_inventory().add_item(items.Pickaxe("100", 1))
+player.get_inventory().add_item(items.TileItem("5", 9999))
 
 # Variables used for breaking blocks
 breakstart = None 
@@ -75,7 +76,7 @@ while running:
     screen.blit(player.image, (player.rect.x - camera.get_x(), player.rect.y - camera.get_y()))
 
     # Draw hotbar
-    inventory_ui.render_hotbar(screen, player.get_inventory().get_items()[0:conf.HOTBAR_SIZE], player.get_inventory().get_selected_slot())
+    inventory_ui.render_inventory(screen, player.get_inventory().get_items(), player.get_inventory().get_selected_slot())
    
     pygame.display.update()
     # 60 FPS

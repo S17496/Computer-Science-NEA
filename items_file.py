@@ -8,6 +8,7 @@ class Item:
         self._name = item_data["name"]
         self._quantity = quantity 
         self._max_stack = item_data["max_stack"]
+        self._texture = item_data["texture"]
 
     # Getters and setters
     def get_name(self) -> str:
@@ -24,6 +25,9 @@ class Item:
 
     def get_id(self) -> str:
         return self._id
+
+    def get_texture(self) -> str:
+        return self._texture
 
     def copy(self):
         return self.__class__(self._id, self._quantity)

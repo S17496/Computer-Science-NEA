@@ -51,3 +51,51 @@ class Inventory:
     def get_selected_item(self) -> items.Item:
         return self.__items[self.__selected_slot]
 
+
+    def get_item_quantity(self, item_id: str) -> int:
+        total = 0
+
+        for item in self.__items:
+            if item is None:
+                continue 
+            elif item.get_id() == item_id:
+                total +=  item.get_quantity()
+
+        return total
+
+
+    def has_ingredients(self, ingredients: dict) -> bool:
+
+        test = True
+        for key in ingredients:
+            if self.get_item_quantity(key) < ingredients[key]:
+                test = False 
+                return test 
+        return test
+
+
+    def remove_quantity(self, item_id: str, quantity: int) -> None:
+
+        for i in range(len(self.__items)):
+
+            item = self.__items[i]
+
+            if item is None:
+                continue 
+
+            if item.get_id() == item_id:
+
+                item_quantity = item.get_quantity()
+                removal = min(item_quantity, quantity)
+                item_quantity -= removal
+                quantity -= removal
+                item.set_quantity(item_quantity)
+
+                if item.get_quantity() == 0:
+                    self.__items[i] = None
+
+                if quantity == 0:
+                    return
+                
+
+
