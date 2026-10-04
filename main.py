@@ -13,12 +13,7 @@ with open("item_data.json", "r") as tile_data:
     tile_data = json.load(tile_data)
 
 def drop_tile(tile_coordinates, item_id):
-    tile_item_entity = ent.ItemEntity(
-        tile_coordinates[0] * conf.TILE_SIZE,
-        tile_coordinates[1] * conf.TILE_SIZE,
-        tile_data[item_id]["texture"],
-        items.TileItem(item_id, 1)
-    )
+    tile_item_entity = ent.ItemEntity(tile_coordinates[0] * conf.TILE_SIZE,tile_coordinates[1] * conf.TILE_SIZE,tile_data[item_id]["texture"],items.TileItem(item_id, 1))
     item_entities.add(tile_item_entity)
 
 # Pygame initialisations
@@ -71,6 +66,7 @@ while running:
 
     # Draw tiles
     world.render_world(player.rect, screen, camera)
+    world.unload_far_chunks(player.rect)
 
     # Draw player
     screen.blit(player.image, (player.rect.x - camera.get_x(), player.rect.y - camera.get_y()))
