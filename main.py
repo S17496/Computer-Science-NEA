@@ -44,14 +44,15 @@ running = True
 while running:
     running = event_handler.handle_events()
 
+    world.queue_nearby_chunks(player.rect, conf.RENDER_DISTANCE, conf.RENDER_DISTANCE)
+    world.process_chunk_queue(1)
 
-    # Player logic
     nearby_tiles = world.get_nearby_rects(player.rect, 10, 10)
     player.update(nearby_tiles, item_entities)
 
     # Dropped item logic
     for dropped_item in item_entities:
-        nearby_tiles = world.get_nearby_rects(dropped_item.rect, 10, 10)
+        nearby_tiles = world.get_nearby_rects(dropped_item.rect, 2, 3)
         dropped_item.update(nearby_tiles, item_entities)
 
     # Camera movement

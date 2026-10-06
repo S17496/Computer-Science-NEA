@@ -8,7 +8,9 @@ import json
 class PerlinNoise:
     def __init__(self, seed):
         self.__seed = seed
-        self.__gradient_cache = {}
+        self.__gradient_2d_cache = {}
+        self.__gradient_1d_cache = {}
+
 
     def lerp(self, a, b, t):
         return a + (b-a) * t
@@ -20,19 +22,23 @@ class PerlinNoise:
         return 6 * x ** 5 - 15 * x ** 4 + 10 * x ** 3
 
     def get_gradient(self, x):
-        rng = random.Random(self.__seed + x)
-        return rng.choice([-1, 1])
+        
+        if x not in self.__gradient_1d_cache:
+            rng = random.Random(self.__seed + x)
+            self.__gradient_1d_cache[x] = rng.choice([-1, 1])
+
+        return self.__gradient_1d_cache[x]
 
     def get_gradient_2d(self, x, y):
         key = (x, y)
 
-        if key not in self.__gradient_cache:
+        if key not in self.__gradient_2d_cache:
             value = self.__seed ^ (x * 614807543)
             value ^= y * 931469120
             value = (value ^ (value >> 13)) * 961379052
-            self.__gradient_cache[key] = conf.GRADIENTS_2D[value % 8]
+            self.__gradient_2d_cache[key] = conf.GRADIENTS_2D[value % 8]
 
-        return self.__gradient_cache[key]
+        return self.__gradient_2d_cache[key]
     
     def noise1D(self, x):
         cell_info = self.get_cell_info(x)
@@ -138,12 +144,20 @@ class Chunk:
             top = (self.__coordinates[1] * conf.CHUNK_SIZE + coordinates_in_chunk[1]) * conf.TILE_SIZE
             return pygame.rect.Rect(left, top, conf.TILE_SIZE, conf.TILE_SIZE)
 
-    def change_tile(self, coordinates_in_chunk, value: int) -> None:
+    def change_tile(self, coordinates_in_chunk: tuple, value: int, mark_dirty: bool = True) -> None:
+
         self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]] = value
-        self.__dirty = True
+
+        if mark_dirty:
+            self.__dirty = True
+
 
     def get_tile_id(self, coordinates_in_chunk: tuple) -> int:
         return self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]]
+
+
+    def mark_dirty(self) -> None:
+        self.__dirty = True
 
 class World:
     # Constructor
@@ -160,6 +174,8 @@ class World:
             self.__tile_data[tile_id]["texture"] = pygame.image.load(texture_path).convert_alpha()
 
         self.__chunks = {}
+        self.__chunk_queue = []
+
         self.__surface_heights = {}
         self.__stone_heights = {}
 
@@ -193,7 +209,9 @@ class World:
                 else:
                     tile_id = 1
 
-                chunk.change_tile((x, y), tile_id)
+                chunk.change_tile((x, y), tile_id, False)
+
+        chunk.mark_dirty()
 
         self.generate_caves_for_chunk(chunk, chunk_coordinates, 100, 0.05)
         return chunk
@@ -276,6 +294,39 @@ class World:
                         chunk.change_tile((x, y), ore)
 
 
+    def queue_chunk(self, chunk_coordinates: tuple) -> None:
+        if chunk_coordinates in self.__chunks:
+            return
+
+        if chunk_coordinates in self.__chunk_queue:
+            return
+
+        self.__chunk_queue.append(chunk_coordinates)
+
+    def process_chunk_queue(self, maximum_chunks: int = 1) -> None:
+        for _ in range(maximum_chunks):
+
+            if len(self.__chunk_queue) == 0:
+                return
+
+            chunk_coordinates = self.__chunk_queue.pop(0)
+
+            if chunk_coordinates not in self.__chunks:
+                self.__chunks[chunk_coordinates] = self.generate_chunk(chunk_coordinates)
+
+
+    def queue_nearby_chunks(self, rect, range_x: int, range_y: int) -> None:#
+
+        world_x = rect.centerx // conf.TILE_SIZE
+        world_y = rect.centery // conf.TILE_SIZE
+
+        current_chunk = self.which_chunk((world_x, world_y))
+
+        for x in range(-range_x, range_x + 1):
+            for y in range(-range_y, range_y + 1):
+                chunk_coordinates = (current_chunk[0] + x, current_chunk[1] + y,)
+
+            self.queue_chunk(chunk_coordinates)
 
     def generate_ore_data(self) -> list:
 
