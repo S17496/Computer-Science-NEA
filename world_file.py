@@ -231,7 +231,6 @@ class World:
             if distance_x > max_distance or distance_y > max_distance:
                 del self.__chunks[chunk_coordinates]
 
-
     def generate_height(self, x: int, base_height: int, period: int, amplitude: int, layers: int) -> int:
         
         height = 0
@@ -324,9 +323,9 @@ class World:
 
         for x in range(-range_x, range_x + 1):
             for y in range(-range_y, range_y + 1):
-                chunk_coordinates = (current_chunk[0] + x, current_chunk[1] + y,)
 
-            self.queue_chunk(chunk_coordinates)
+                chunk_coordinates = (current_chunk[0] + x, current_chunk[1] + y,)
+                self.queue_chunk(chunk_coordinates)
 
     def generate_ore_data(self) -> list:
 
@@ -364,7 +363,11 @@ class World:
                 chunk_coordinates = self.which_chunk((world_position_x + x, world_position_y + y))
                 coordinates_in_chunk = self.where_in_chunk((world_position_x + x, world_position_y + y))
 
-                chunk = self.get_or_create_chunk(chunk_coordinates)
+                chunk = self.__chunks.get(chunk_coordinates)
+
+                if chunk is None:
+                    continue
+
                 tile_rect = chunk.get_tile_rect(coordinates_in_chunk)
                 
                 if tile_rect is not None:
@@ -383,7 +386,10 @@ class World:
             for y in range(-range_y, range_y + 1):
                 chunk_coordinates = (current_chunk_coordinates[0] + x, current_chunk_coordinates[1] + y)
                 # MIGHT NEED CHANGING FOR WHEN PLAYER IS AT EDGE OF WORLD
-                nearby[chunk_coordinates] = self.get_or_create_chunk(chunk_coordinates)
+                chunk = self.__chunks.get(chunk_coordinates)
+
+                if chunk is not None:
+                    nearby[chunk_coordinates] = chunk
         return nearby 
 
 
