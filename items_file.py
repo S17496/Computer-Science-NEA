@@ -3,7 +3,7 @@ import json
 class Item:
     def __init__(self, id: str, quantity: int) -> None:
         self._id = id
-        with open("item_data.json", "r") as file:
+        with open("data/items.json", "r") as file:
             item_data = json.load(file)[id]
         self._name = item_data["name"]
         self._quantity = quantity 
@@ -35,7 +35,7 @@ class Item:
 class Pickaxe(Item):
     def __init__(self, id: str, quantity: int) -> None:
         super().__init__(id, quantity)
-        with open("item_data.json", "r") as file:
+        with open("data/items.json", "r") as file:
                     item_data = json.load(file)[id]
         self.__pickaxe_power = item_data["pickaxe_power"]
         self.__pickaxe_speed = item_data["pickaxe_speed"]
@@ -46,6 +46,6 @@ class Pickaxe(Item):
 class TileItem(Item):
     def __init__(self, id: str, quantity: str) -> None:
         super().__init__(id, quantity)
-        with open("item_data.json", "r") as file:
+        with open("data/items.json", "r") as file:
             item_data = json.load(file)[id]
         self.__tile_id = item_data["tile_id"]

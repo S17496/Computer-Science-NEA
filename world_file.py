@@ -95,12 +95,19 @@ class PerlinNoise:
 
     
 class Chunk:
-    def __init__(self, coordinates: tuple) -> None:
-        self.__tiles = [[-1 for _ in range(conf.CHUNK_SIZE)] for _ in range(conf.CHUNK_SIZE)]
+
+    def __init__(self, coordinates: tuple, tiles: list | None = None, modified: bool = False) -> None:
+
+        if tiles is None:
+            tiles = [[-1 for _ in range(conf.CHUNK_SIZE)]for _ in range(conf.CHUNK_SIZE)]
+
+        self.__tiles = tiles
 
         self.__coordinates = coordinates
 
         self.__dirty = True
+
+        self.__modified = modified
 
         chunk_pixel_size = conf.CHUNK_SIZE * conf.TILE_SIZE
         self.__surface = pygame.Surface((chunk_pixel_size, chunk_pixel_size), pygame.SRCALPHA).convert_alpha()
@@ -125,6 +132,7 @@ class Chunk:
 
         self.__dirty = False
 
+
     def render(self, screen, camera: object, tile_data: dict) -> None:
         if self.__dirty:
             self.rebuild_surface(tile_data)
@@ -135,7 +143,6 @@ class Chunk:
         screen.blit(self.__surface, (chunk_world_x - camera.get_x(), chunk_world_y - camera.get_y()))
 
 
-    # Getters and setters
     def get_tile_rect(self, coordinates_in_chunk: tuple) -> pygame.rect.Rect:
         """Returns a rect object with correct world coordinates based on its tile coordinates in the chunk."""
 
@@ -144,43 +151,54 @@ class Chunk:
             top = (self.__coordinates[1] * conf.CHUNK_SIZE + coordinates_in_chunk[1]) * conf.TILE_SIZE
             return pygame.rect.Rect(left, top, conf.TILE_SIZE, conf.TILE_SIZE)
 
+
     def change_tile(self, coordinates_in_chunk: tuple, value: int, mark_dirty: bool = True) -> None:
 
         self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]] = value
 
         if mark_dirty:
             self.__dirty = True
+            self.__modified = True
 
 
     def get_tile_id(self, coordinates_in_chunk: tuple) -> int:
         return self.__tiles[coordinates_in_chunk[0]][coordinates_in_chunk[1]]
 
 
+    def get_modified(self) -> bool:
+        return self.__modified
+
+
     def mark_dirty(self) -> None:
         self.__dirty = True
 
+
+    def get_tiles(self) -> list:
+        return [row[:] for row in self.__tiles]
+
 class World:
-    # Constructor
-    def __init__(self, seed) -> None:
+
+    def __init__(self, name, seed) -> None:
+        self.__name = name
         self.__seed = seed
         self.__perlin_noise = PerlinNoise(seed)
 
-        with open("tile_data.json", "r") as tile_data:
+        with open("data/tiles.json", "r") as tile_data:
             self.__tile_data = json.load(tile_data)
 
-        # Converts file paths in tile data to pygame images
+        # Converts texture file paths in tile data to pygame images
         for tile_id in self.__tile_data:
             texture_path = self.__tile_data[tile_id]["texture"]
             self.__tile_data[tile_id]["texture"] = pygame.image.load(texture_path).convert_alpha()
 
-        self.__chunks = {}
-        self.__chunk_queue = []
-
         self.__surface_heights = {}
         self.__stone_heights = {}
 
+        self.__chunks = self.load_saved_chunks()
+        self.__chunk_queue = []
 
-    def get_or_create_chunk(self, chunk_coordinates) -> Chunk:
+
+    def get_or_create_chunk(self, chunk_coordinates: tuple) -> Chunk:
 
         if chunk_coordinates not in self.__chunks:
             self.__chunks[chunk_coordinates] = self.generate_chunk(chunk_coordinates)
@@ -188,7 +206,7 @@ class World:
         return self.__chunks[chunk_coordinates]
 
 
-    def generate_chunk(self, chunk_coordinates) -> Chunk:
+    def generate_chunk(self, chunk_coordinates: tuple) -> Chunk:
 
         chunk_x, chunk_y = chunk_coordinates
         chunk = Chunk(chunk_coordinates)
@@ -211,25 +229,29 @@ class World:
 
                 chunk.change_tile((x, y), tile_id, False)
 
+        self.generate_caves_for_chunk(chunk, chunk_coordinates, 100, 0.05)
+
         chunk.mark_dirty()
 
-        self.generate_caves_for_chunk(chunk, chunk_coordinates, 100, 0.05)
         return chunk
 
 
-    def unload_far_chunks(self, player_rect):
+    def unload_far_chunks(self, player_rect) -> None:
         player_x = player_rect.centerx // conf.TILE_SIZE
         player_y = player_rect.centery // conf.TILE_SIZE
         current_chunk = self.which_chunk((player_x, player_y))
 
-        max_distance = conf.RENDER_DISTANCE + 2
-
         for chunk_coordinates in list(self.__chunks):
+
+            if self.__chunks[chunk_coordinates].get_modified():
+                continue
+            
             distance_x = abs(chunk_coordinates[0] - current_chunk[0])
             distance_y = abs(chunk_coordinates[1] - current_chunk[1])
 
-            if distance_x > max_distance or distance_y > max_distance:
+            if distance_x > conf.UNLOAD_DISTANCE or distance_y > conf.UNLOAD_DISTANCE:
                 del self.__chunks[chunk_coordinates]
+
 
     def generate_height(self, x: int, base_height: int, period: int, amplitude: int, layers: int) -> int:
         
@@ -262,7 +284,6 @@ class World:
         return self.__stone_heights[x]
 
 
-
     def generate_caves_for_chunk(self, chunk: Chunk, chunk_coordinates: tuple, period: int, threshold: float) -> None:
 
         for x in range(conf.CHUNK_SIZE):
@@ -274,8 +295,7 @@ class World:
                     noise_value = self.__perlin_noise.noise2D(world_x / period, world_y / period)
 
                     if abs(noise_value) <= threshold:
-                        chunk.change_tile((x, y), -1)
-
+                        chunk.change_tile((x, y), -1, False)
 
 
     def generate_ore(self, ore: int, ore_threshold) -> None:
@@ -302,30 +322,49 @@ class World:
 
         self.__chunk_queue.append(chunk_coordinates)
 
-    def process_chunk_queue(self, maximum_chunks: int = 1) -> None:
+
+    def process_chunk_queue(self, rect, maximum_chunks: int) -> None:
         for _ in range(maximum_chunks):
 
             if len(self.__chunk_queue) == 0:
                 return
 
+            (rect_x, rect_y) = self.which_chunk((rect.centerx // conf.TILE_SIZE, rect.centery // conf.TILE_SIZE))
             chunk_coordinates = self.__chunk_queue.pop(0)
+
+            while abs(chunk_coordinates[0] - rect_x) > conf.UNLOAD_DISTANCE or abs(chunk_coordinates[1] - rect_y) > conf.UNLOAD_DISTANCE:
+
+                if len(self.__chunk_queue) == 0:
+                    return
+                
+                chunk_coordinates = self.__chunk_queue.pop(0)
 
             if chunk_coordinates not in self.__chunks:
                 self.__chunks[chunk_coordinates] = self.generate_chunk(chunk_coordinates)
 
 
-    def queue_nearby_chunks(self, rect, range_x: int, range_y: int) -> None:#
+    def queue_nearby_chunks(self, rect) -> None:
 
         world_x = rect.centerx // conf.TILE_SIZE
         world_y = rect.centery // conf.TILE_SIZE
 
         current_chunk = self.which_chunk((world_x, world_y))
 
-        for x in range(-range_x, range_x + 1):
-            for y in range(-range_y, range_y + 1):
+        for x in range(conf.LOAD_DISTANCE + 1):
+            for y in range(conf.LOAD_DISTANCE + 1):
 
-                chunk_coordinates = (current_chunk[0] + x, current_chunk[1] + y,)
+                chunk_coordinates = (current_chunk[0] + x, current_chunk[1] + y)
                 self.queue_chunk(chunk_coordinates)
+
+                chunk_coordinates = (current_chunk[0] - x, current_chunk[1] + y)
+                self.queue_chunk(chunk_coordinates)
+
+                chunk_coordinates = (current_chunk[0] + x, current_chunk[1] - y)
+                self.queue_chunk(chunk_coordinates)
+
+                chunk_coordinates = (current_chunk[0] - x, current_chunk[1] - y)
+                self.queue_chunk(chunk_coordinates)
+
 
     def generate_ore_data(self) -> list:
 
@@ -340,16 +379,16 @@ class World:
         return ores_data
 
 
-    def which_chunk(self, tile_coordinates: tuple) -> tuple:
-        """Returns chunk coordinates based on tile coordinates."""
-        return (tile_coordinates[0] // conf.CHUNK_SIZE, tile_coordinates[1] // conf.CHUNK_SIZE)
+    def which_chunk(self, coordinates: tuple) -> tuple:
+        """Returns chunk coordinates based on world coordinates."""
+        return (coordinates[0] // conf.CHUNK_SIZE, coordinates[1] // conf.CHUNK_SIZE)
 
 
     def where_in_chunk(self, coordinates: tuple) -> tuple:
-        """Returns tile coordinates in chunk based on tile coordinates."""
+        """Returns tile coordinates in chunk based on world coordinates."""
         return (coordinates[0] % conf.CHUNK_SIZE, coordinates[1] % conf.CHUNK_SIZE)
 
-    # Get nearby rects to player for checking collisions
+
     def get_nearby_rects(self, rect, range_x: int, range_y: int) -> list:
         """Returns a list of tile rects around a rect."""
 
@@ -374,7 +413,9 @@ class World:
                     nearby.append(tile_rect)
         return nearby
 
-    def get_nearby_chunks(self, rect, range_x: int, range_y: int) -> dict:
+
+    def get_nearby_chunks(self, rect) -> dict:
+
         world_position_x = rect.centerx // conf.TILE_SIZE
         world_position_y = rect.centery // conf.TILE_SIZE
 
@@ -382,8 +423,8 @@ class World:
 
         nearby = {}
 
-        for x in range(-range_x, range_x + 1):
-            for y in range(-range_y, range_y + 1):
+        for x in range(-conf.RENDER_DISTANCE, conf.RENDER_DISTANCE + 1):
+            for y in range(-conf.RENDER_DISTANCE, conf.RENDER_DISTANCE + 1):
                 chunk_coordinates = (current_chunk_coordinates[0] + x, current_chunk_coordinates[1] + y)
                 # MIGHT NEED CHANGING FOR WHEN PLAYER IS AT EDGE OF WORLD
                 chunk = self.__chunks.get(chunk_coordinates)
@@ -400,18 +441,54 @@ class World:
 
 
     def render_world(self, player_rect, screen, camera) -> None:
-        chunks = self.get_nearby_chunks(player_rect, conf.RENDER_DISTANCE, conf.RENDER_DISTANCE)
+        chunks = self.get_nearby_chunks(player_rect)
 
         for chunk in chunks.values():
             chunk.render(screen, camera, self.__tile_data)
 
 
-    # Getters and setters
     def get_chunk(self, coordinates: tuple) -> list:
         return self.__chunks[coordinates]
+
 
     def get_item_id(self, tile_id: str) -> str:
         return self.__tile_data[tile_id]["item_id"]
 
+
     def get_chunks(self) -> dict:
         return self.__chunks
+
+
+    def save_chunks(self) -> None:
+
+        saved_chunks = {}
+
+        for chunk_coordinates in self.__chunks:
+
+            chunk = self.__chunks[chunk_coordinates]
+
+            if not(chunk.get_modified()):
+                continue
+
+            key = f"{chunk_coordinates[0]},{chunk_coordinates[1]}"
+            saved_chunks[key] = chunk.get_tiles()
+
+        with open(f"saves/{self.__name}/chunks.json", "w") as file:
+            json.dump(saved_chunks, file)
+
+
+    def load_saved_chunks(self) -> dict:
+
+        chunks = {}
+
+        with open(f"saves/{self.__name}/chunks.json", "r") as file:
+            file = json.load(file)
+
+        for key in file:
+            x, y = key.split(",")
+            chunk = Chunk((x, y), file[key], True)
+            chunks[(x, y)] = chunk
+
+        return chunks
+
+            

@@ -9,7 +9,7 @@ import entity_file as ent
 import events
 import json
 
-with open("item_data.json", "r") as tile_data:
+with open("data/items.json", "r") as tile_data:
     tile_data = json.load(tile_data)
 
 def drop_tile(tile_coordinates, item_id):
@@ -44,8 +44,8 @@ running = True
 while running:
     running = event_handler.handle_events()
 
-    world.queue_nearby_chunks(player.rect, conf.RENDER_DISTANCE, conf.RENDER_DISTANCE)
-    world.process_chunk_queue(1)
+    world.queue_nearby_chunks(player.rect)
+    world.process_chunk_queue(player.rect, 1)
 
     nearby_tiles = world.get_nearby_rects(player.rect, 10, 10)
     player.update(nearby_tiles, item_entities)

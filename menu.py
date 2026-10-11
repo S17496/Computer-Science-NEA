@@ -4,145 +4,208 @@ import config_file as conf
 import camera_file as camera
 import events
 import inventoryUI_file as invUI
+import pygame_gui
 
 pygame.init()
 
-class Button:
-    def __init__(self, text, rect):
-        self.__text = text
-        self.rect = pygame.Rect(rect)
 
-        self.__normal_color = (80, 80, 80)
-        self.__hover_color = (120, 120, 120)
-        self.__text_color = (255, 255, 255)
 
-        self.font = pygame.font.Font(None, 36)
-
-    def draw(self, surface):
-        mouse_pos = pygame.mouse.get_pos()
-
-        if self.rect.collidepoint(mouse_pos):
-            color = self.__hover_color
-        else:
-            color = self.__normal_color
-
-        pygame.draw.rect(surface, color, self.rect)
-        pygame.draw.rect(surface, (255, 255, 255), self.rect, 2)
-
-        text_surface = self.font.render(self.__text, True, self.__text_color)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-
-        surface.blit(text_surface, text_rect)
-
-    def handle_event(self, event):
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                if self.rect.collidepoint(event.pos):
-                    return True
-
-        return False
-
-    
 class Menu:
-    def __init__(self, screen):
-        self.__state = "main menu"
+    def __init__(self, screen, clock):
+
         self.screen = screen
+        self.clock = clock
+
+        self.__state = "main menu"
         self.__saved_worlds = []
         self.__saved_players = []
+
 
     def get_state(self) -> str:
         return self.__state
 
+
     def main_menu(self) -> None:
 
-        buttons = (Button("Play", (1000, 250, 280, 60)), Button("Settings", (1000, 350, 280, 60)), Button("Quit", (1000, 450, 280, 60)))
+        manager = pygame_gui.UIManager(self.screen.get_size())
 
+        play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 250), (280, 60)), text="Play", manager=manager)        
+        settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 350), (280, 60)), text="Settings", manager=manager)
+        quit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 450), (280, 60)), text="Quit", manager=manager)
+                
         running = True
+
         while running:
 
-            selected_button = None 
-
-            for button in buttons:
-                button.draw(self.screen)
+            time_passed = self.clock.tick(60) / 1000.0
 
             for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
 
-                        if buttons[0].handle_event(event):
-                            selected_button = "play"
+                manager.process_events(event)
 
-                        elif buttons[1].handle_event(event):
-                            selected_button = "settings"
+                if event.type == pygame.QUIT:
+                    self.__state = "quit"
+                    running = False
 
-                        elif buttons[2].handle_event(event):
-                            selected_button = "quit"
+                elif event.type == pygame_gui.UI_BUTTON_PRESSED:
 
-            if selected_button == "play":
-                self.__state = "select world"
-                running = False
+                    if event.ui_element == play_button:
+                        self.__state = "select world"
+                        running = False
 
-            elif selected_button == "settings":
-                self.__state = "settings"
-                running = False
+                    elif event.ui_element == settings_button:
+                        self.__state = "settings"
+                        running = False
 
-            elif selected_button == "quit":
-                self.__state = "quit"
-                running = False
+                    elif event.ui_element == quit_button:
+                        self.__state = "quit"
+                        running = False
 
+                self.screen.fill((30, 30, 30))
+                manager.update(time_passed)
+                manager.draw_ui(self.screen)
+                pygame.display.flip()
+
+
+    def select_world(self) -> w.World:
+        # Load worlds
+        manager = pygame_gui.UIManager(self.screen.get_size())
+
+        worlds = ["world1"]
+
+        world_buttons = []
+
+        back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 550), (190, 60)), text="Back", manager=manager)
+
+        y = 200
+        for world_name in worlds:
+            select_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, y), (190, 60)), text="Select world", manager=manager)
+            world_buttons.append((select_button, world_name))
+            y += 100
+
+        running = True
+        
+        while running:
+        
+            time_passed = self.clock.tick(60) / 1000.0
+        
+            for event in pygame.event.get():
+        
+                manager.process_events(event)
+        
+                if event.type == pygame.QUIT:
+                    self.__state = "quit"
+                    running = False
+        
+                elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+
+                    for button, world_name in world_buttons:
+                        if event.ui_element == button:
+
+                            self.__state = "select player"
+
+                            # TEMPORARY
+                            return w.World(0)
+        
+                    if event.ui_element == back_button:
+                        self.__state = "main menu"
+                        running = False
+
+            self.screen.fill((30, 30, 30))
+            manager.update(time_passed)
+            manager.draw_ui(self.screen)
             pygame.display.flip()
+            
         
 
-    def select_world(self) -> w.World | None:
-        name = input()
-        seed = input()
-        size = input()
-        back = input()
 
-        if back == "Yes":
-            self.__state = "Main menu"
-            return
+    def create_world(self) -> w.World | None:
 
-        self.__state = "select character"
-        return w.World(seed)
+        manager = pygame_gui.UIManager(self.screen.get_size())
 
+        create_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 550), (190, 60)), text="Create world", manager=manager)
+        back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 550), (190, 60)), text="Back", manager=manager)
+
+        name_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 250), (400, 60)), manager=manager)
+        seed_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 350), (400, 60)), manager=manager)
+        size_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 450), (400, 60)), manager=manager)
+
+        running = True
+
+        while running:
+
+            time_passed = self.clock.tick(60) / 1000.0
+
+            for event in pygame.event.get():
+
+                manager.process_events(event)
+
+                if event.type == pygame.QUIT:
+                    self.__state = "quit"
+                    running = False
+
+                elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+
+                    if event.ui_element == create_button:
+
+                        world_name = name_box.get_text()
+                        seed_text = seed_box.get_text()
+                        size_text = size_box.get_text()
+
+                        self.__state = "select world"
+                        running = False
+
+                    elif event.ui_element == back_button:
+                        self.__state = "main menu"
+                        running = False
+
+
+                self.screen.fill((30, 30, 30))
+                manager.update(time_passed)
+                manager.draw_ui(self.screen)
+                pygame.display.flip()
+
+
+    def select_player(self) -> player.Player:
+        pass
 
 class Game:
     def __init__(self):
+
+        self.screen = pygame.display.set_mode((conf.SCREEN_WIDTH, conf.SCREEN_HEIGHT))
+        self.clock = pygame.time.Clock()
+
         self.__world = None
         self.__player = None
         self.__camera = camera.Camera()
         self.__inventory_ui = invUI.InventoryUI(pygame.font.Font(None, 32))
-        self.screen = pygame.display.set_mode((conf.SCREEN_WIDTH, conf.SCREEN_HEIGHT))
-        self.clock = pygame.time.Clock()
-        self.__menu = Menu(self.screen)
+        self.__menu = Menu(self.screen, self.clock)
         self.run()
         
 
     def run(self):
 
-        menu_state = self.__menu.get_state()
+        while True:
+            menu_state = self.__menu.get_state()
 
-        if menu_state == "main menu":
-            self.__menu.main_menu()
-            self.run()
+            if menu_state == "main menu":
+                self.__menu.main_menu()
 
-        elif menu_state == "select world":
-            self.__world = self.__menu.select_world()
-            self.run()
+            elif menu_state == "create world":
+                self.__world = self.__menu.create_world()
 
-        elif menu_state == "select player":
-            self.__player = self.__menu.select_player()
-            self.run()
+            elif menu_state == "select world":
+                self.__world = self.__menu.select_world()
 
-        elif menu_state == "play" and  self.__player is not None and self.__world is not None:
-            self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, drop_tile, inventory_ui)
-            self.play()
-            self.run()
+            elif menu_state == "select player":
+                self.__player = self.__menu.select_player()
 
-        else:
-            return
+            elif menu_state == "play" and self.__player is not None and self.__world is not None:
+                self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, drop_tile, inventory_ui,)
+                self.play()
+
+            else:
+                return
 
 
     def play(self) -> None:

@@ -5,10 +5,10 @@ import items_file as items
 
 class Crafting:
     def __init__(self) -> None:
-        with open("recipes.json", "r") as file:
+        with open("data/recipes.json", "r") as file:
             self.__recipes = json.load(file)
 
-        with open("item_data.json", "r") as file:
+        with open("data/items.json", "r") as file:
             self.__item_data = json.load(file)
 
     def craft(self, recipe_id: str, inventory) -> None:
@@ -24,4 +24,3 @@ class Crafting:
                 inventory.remove_quantity(ingredient_id, quantity_needed)
 
                 # Adds item to inventory
-
