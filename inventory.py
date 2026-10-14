@@ -1,5 +1,5 @@
-import config_file as conf
-import items_file as items
+import config
+import items
 
 
 class Inventory:
@@ -8,7 +8,7 @@ class Inventory:
         
         # Fills in all inventory slots with placeholder None
         self.__items = []
-        for _ in range(conf.INVENTORY_SIZE):
+        for _ in range(config.INVENTORY_SIZE):
             self.__items.append(None)
 
 
@@ -44,7 +44,7 @@ class Inventory:
         return self.__selected_slot
 
     def set_selected_slot(self, slot: int) -> None:
-        if slot >= conf.HOTBAR_SIZE or slot < 0:
+        if slot >= config.HOTBAR_SIZE or slot < 0:
             return
         self.__selected_slot = slot
 

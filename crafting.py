@@ -1,6 +1,5 @@
 import json
-
-import items_file as items
+import items
 
 
 class Crafting:
@@ -10,6 +9,7 @@ class Crafting:
 
         with open("data/items.json", "r") as file:
             self.__item_data = json.load(file)
+
 
     def craft(self, recipe_id: str, inventory) -> None:
             

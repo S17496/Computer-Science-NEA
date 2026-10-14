@@ -1,12 +1,12 @@
 import pygame
-import player_file as p
-import items_file as items
-import config_file as conf
-import world_file as w
+import items
+import config
+
+
 
 class EventHandler:
-    def __init__(self, player: p.Player, world: w.World, camera, drop_tile, inventory_ui):
-        self.__player = player 
+    def __init__(self, player, world, camera, drop_tile, inventory_ui):
+        self.__player = player
         self.__world = world 
         self.__camera = camera 
         self.__drop_tile = drop_tile
@@ -41,7 +41,7 @@ class EventHandler:
             return 
         
         mouse_pos = pygame.mouse.get_pos()
-        tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//conf.TILE_SIZE))
+        tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//config.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//config.TILE_SIZE))
 
         if tile_coordinates[0] >= player_pos1[0] and tile_coordinates[0] <= player_pos2[0] and tile_coordinates[1] >= player_pos1[1] and tile_coordinates[1] <= player_pos2[1]:
             return 
@@ -74,7 +74,7 @@ class EventHandler:
             return 
             
         mouse_pos = pygame.mouse.get_pos()
-        tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//conf.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//conf.TILE_SIZE))
+        tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//config.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//config.TILE_SIZE))
         
         chunk_coordinates = self.__world.which_chunk(tile_coordinates)
         coordinates_in_chunk = self.__world.where_in_chunk(tile_coordinates)

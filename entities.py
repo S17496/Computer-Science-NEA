@@ -1,6 +1,6 @@
 import pygame
 import random 
-import config_file as conf
+import config
 
 class Entity(pygame.sprite.Sprite):
     # Constructor
@@ -21,7 +21,7 @@ class ItemEntity(Entity):
         super().__init__(x, y, image)
         self.__item = item
         self.__vel_y = 0
-        self.__gravity = conf.GRAVITY
+        self.__gravity = config.GRAVITY
 
     def get_item(self) -> object:
         return self.__item

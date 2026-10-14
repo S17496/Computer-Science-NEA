@@ -1,39 +1,39 @@
 import pygame
-import inventory_file as inv
-import entity_file as ent
-import items_file as items
-import config_file as conf
+import inventory
+import entities
+import items
+import config
 
 
-class Player(ent.Entity):
+class Player(entities.Entity):
     # Constructor
     def __init__(self, x: int, y: int, image: str) -> None:
         super().__init__(x, y, image)
 
         # Inventory
-        self.__inventory = inv.Inventory()
+        self.__inventory = inventory.Inventory()
 
         # Movement
         self.__vel_x = 0
         self.__vel_y = 0
         self.__speed = 5
-        self.__gravity = conf.GRAVITY
+        self.__gravity = config.GRAVITY
         self.__jump_strength = -14
         self.__on_ground = False
 
 
     # Getters and setters
-    def get_inventory(self) -> inv.Inventory:
+    def get_inventory(self) -> inventory.Inventory:
         return self.__inventory
 
     def update_inventory(self, item: items.Item) -> None:
         self.__inventory.add_item(item)
 
     def get_top_left_coordinates(self) -> tuple:
-        return (self.rect.x // conf.TILE_SIZE, self.rect.y // conf.TILE_SIZE)
+        return (self.rect.x // config.TILE_SIZE, self.rect.y // config.TILE_SIZE)
 
     def get_bottom_right_coordinates(self) -> tuple:
-        return ((self.rect.x + conf.PLAYER_WIDTH) // conf.TILE_SIZE, (self.rect.y + conf.PLAYER_HEIGHT) // conf.TILE_SIZE)
+        return ((self.rect.x + config.PLAYER_WIDTH) // config.TILE_SIZE, (self.rect.y + config.PLAYER_HEIGHT) // config.TILE_SIZE)
 
 
     def update(self, tiles: list, item_entities: list) -> None:
@@ -59,6 +59,7 @@ class Player(ent.Entity):
                 self.rect.x += 1
             elif self.__vel_x < 0:
                 self.rect.x -= 1
+
             # Horizontal collisions
             for rect in tiles:
                 if self.rect.colliderect(rect):
