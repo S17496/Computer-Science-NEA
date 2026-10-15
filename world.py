@@ -489,7 +489,7 @@ class World:
                 file = json.load(file)
 
             for key in file:
-                x, y = key.split(",")
+                x, y = map(int, key.split(","))
                 chunk = Chunk((x, y), file[key], True)
                 chunks[(x, y)] = chunk
 

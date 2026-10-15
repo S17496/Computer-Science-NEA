@@ -12,6 +12,7 @@ class Player(entities.Entity):
 
         # Inventory
         self.__inventory = inventory.Inventory()
+        self.__inventory.add_item(items.Pickaxe("100", 1))
 
         # Movement
         self.__vel_x = 0

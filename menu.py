@@ -7,8 +7,8 @@ import pygame_gui
 class Menu:
     def __init__(self, screen, clock):
 
-        self.screen = screen
-        self.clock = clock
+        self.__screen = screen
+        self.__clock = clock
 
         self.__state = "main menu"
 
@@ -19,7 +19,7 @@ class Menu:
 
     def main_menu(self) -> None:
 
-        manager = pygame_gui.UIManager(self.screen.get_size())
+        manager = pygame_gui.UIManager(self.__screen.get_size())
 
         play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 250), (280, 60)), text="Play", manager=manager)        
         settings_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 350), (280, 60)), text="Settings", manager=manager)
@@ -29,7 +29,7 @@ class Menu:
 
         while running:
 
-            time_passed = self.clock.tick(60) / 1000.0
+            time_passed = self.__clock.tick(60) / 1000.0
 
             for event in pygame.event.get():
 
@@ -53,21 +53,23 @@ class Menu:
                         self.__state = "quit"
                         running = False
 
-                self.screen.fill((30, 30, 30))
+                self.__screen.fill((30, 30, 30))
                 manager.update(time_passed)
-                manager.draw_ui(self.screen)
+                manager.draw_ui(self.__screen)
                 pygame.display.flip()
 
 
     def select_world(self) -> world.World:
         # Load worlds
-        manager = pygame_gui.UIManager(self.screen.get_size())
+        manager = pygame_gui.UIManager(self.__screen.get_size())
 
         worlds = ["world1"]
 
         world_buttons = []
 
         back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 550), (190, 60)), text="Back", manager=manager)
+
+        create_world_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 650), (190, 60)), text="Create world", manager=manager)
 
         y = 200
         for world_name in worlds:
@@ -79,7 +81,7 @@ class Menu:
         
         while running:
         
-            time_passed = self.clock.tick(60) / 1000.0
+            time_passed = self.__clock.tick(60) / 1000.0
         
             for event in pygame.event.get():
         
@@ -103,9 +105,13 @@ class Menu:
                         self.__state = "main menu"
                         running = False
 
-            self.screen.fill((30, 30, 30))
+                    elif event.ui_element == create_world_button:
+                        self.__state = "create world"
+                        running = False
+
+            self.__screen.fill((30, 30, 30))
             manager.update(time_passed)
-            manager.draw_ui(self.screen)
+            manager.draw_ui(self.__screen)
             pygame.display.flip()
             
         
@@ -126,7 +132,7 @@ class Menu:
 
         while running:
 
-            time_passed = self.clock.tick(60) / 1000.0
+            time_passed = self.__clock.tick(60) / 1000.0
 
             for event in pygame.event.get():
 
@@ -152,13 +158,57 @@ class Menu:
                         running = False
 
 
-                self.screen.fill((30, 30, 30))
+                self.__screen.fill((30, 30, 30))
                 manager.update(time_passed)
-                manager.draw_ui(self.screen)
+                manager.draw_ui(self.__screen)
                 pygame.display.flip()
 
 
     def select_player(self) -> player.Player:
-        self.__state = "play"
-        return player.Player(500, 0, "player.png")
-    
+
+        manager = pygame_gui.UIManager(self.__screen.get_size())
+
+        players = ["player1"]
+
+        player_buttons = []
+
+        back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 550), (190, 60)), text="Back", manager=manager)
+
+        y = 200
+        for player_name in players:
+            select_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, y), (190, 60)), text=player_name, manager=manager)
+            player_buttons.append((select_button, player_name))
+            y += 100
+
+        running = True
+        
+        while running:
+        
+            time_passed = self.__clock.tick(60) / 1000.0
+        
+            for event in pygame.event.get():
+        
+                manager.process_events(event)
+        
+                if event.type == pygame.QUIT:
+                    self.__state = "quit"
+                    running = False
+        
+                elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+
+                    for button, player_name in player_buttons:
+                        if event.ui_element == button:
+
+                            # TEMPORARY
+                            self.__state = "play"
+                            return player.Player(500, 0, "player.png")
+        
+                    if event.ui_element == back_button:
+                        self.__state = "main menu"
+                        running = False
+
+            self.__screen.fill((30, 30, 30))
+            manager.update(time_passed)
+            manager.draw_ui(self.__screen)
+            pygame.display.flip()
+
