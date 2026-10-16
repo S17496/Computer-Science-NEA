@@ -94,7 +94,6 @@ class PerlinNoise:
         return self.lerp(bottom, top, fade_y)
 
 
-    
 class Chunk:
 
     def __init__(self, coordinates: tuple, tiles: list | None = None, modified: bool = False) -> None:
@@ -177,6 +176,7 @@ class Chunk:
     def get_tiles(self) -> list:
         return [row[:] for row in self.__tiles]
 
+
 class World:
 
     def __init__(self, name, seed) -> None:
@@ -194,6 +194,7 @@ class World:
 
         self.__surface_heights = {}
         self.__stone_heights = {}
+        self.__ore_thresholds = self.generate_ore_thresholds()
 
         self.__chunks = self.load_saved_chunks()
         self.__chunk_queue = []
@@ -231,6 +232,7 @@ class World:
                 chunk.change_tile((x, y), tile_id, False)
 
         self.generate_caves_for_chunk(chunk, chunk_coordinates, 100, 0.05)
+        self.generate_ore_for_chunk(chunk, chunk_coordinates, "2")
 
         chunk.mark_dirty()
 
@@ -298,20 +300,33 @@ class World:
                     if abs(noise_value) <= threshold:
                         chunk.change_tile((x, y), -1, False)
 
+    def generate_ore_thresholds(self) -> dict:
 
-    def generate_ore(self, ore: int, ore_threshold) -> None:
-        
-        for chunk_coordinates in self.__chunks:
-            chunk = self.__chunks[chunk_coordinates]
+        ore_thresholds = {}
 
-            for x in range(config.CHUNK_SIZE):
-                for y in range(config.CHUNK_SIZE):
-                    world_x = chunk_coordinates[0] * config.CHUNK_SIZE + x 
-                    world_y = chunk_coordinates[1] * config.CHUNK_SIZE + y 
+        for tile_id in self.__tile_data:
 
-                    noise_value = self.__perlin_noise.noise2D(world_x/10, world_y/10)
-                    if abs(noise_value) <= ore_threshold and chunk.get_tile_id((x, y)) == 1:
-                        chunk.change_tile((x, y), ore)
+            ore_data = self.__tile_data[tile_id]
+            if "ore_threshold" in ore_data:
+                ore_thresholds[tile_id] = ore_data["ore_threshold"]
+
+        return ore_thresholds
+
+
+    def generate_ore_for_chunk(self, chunk: Chunk, chunk_coordinates: tuple, tile_id: str) -> None:
+
+        tile_id_int = int(tile_id)
+
+        for x in range(config.CHUNK_SIZE):
+            for y in range(config.CHUNK_SIZE):
+                
+                world_x = chunk_coordinates[0] * config.CHUNK_SIZE + x 
+                world_y = chunk_coordinates[1] * config.CHUNK_SIZE + y 
+
+                noise_value = self.__perlin_noise.noise2D(world_x / 25, world_y / 25)
+
+                if abs(noise_value) <= self.__ore_thresholds[tile_id] and chunk.get_tile_id((x, y)) == 1:
+                    chunk.change_tile((x, y), tile_id_int)
 
 
     def queue_chunk(self, chunk_coordinates: tuple) -> None:
@@ -365,19 +380,6 @@ class World:
 
                 chunk_coordinates = (current_chunk[0] - x, current_chunk[1] - y)
                 self.queue_chunk(chunk_coordinates)
-
-
-    def generate_ore_data(self) -> list:
-
-        ores_data = []
-
-        for tile_id in self.__tile_data:
-
-            ore_data = self.__tile_data[tile_id]
-            if "ore_threshold" in ore_data:
-                ores_data.append((int(tile_id), ore_data["ore_threshold"]))
-
-        return ores_data
 
 
     def which_chunk(self, coordinates: tuple) -> tuple:

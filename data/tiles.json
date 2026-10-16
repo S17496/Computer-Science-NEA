@@ -19,7 +19,7 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "2",
-        "ore_threshold": 0.72
+        "ore_threshold": 0.005
     },
     "3": {
         "name": "Iron Ore",
