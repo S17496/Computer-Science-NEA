@@ -53,7 +53,7 @@
         "max_stack": 1,
         "texture": "assets/items/copper_pickaxe.png",
         "pickaxe_power": 0,
-        "pickaxe_speed": 1
+        "pickaxe_speed": 100
     }
 
 }

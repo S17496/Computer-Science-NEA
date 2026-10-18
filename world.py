@@ -16,13 +16,12 @@ class PerlinNoise:
     def lerp(self, a, b, t):
         return a + (b-a) * t
 
-    def get_cell_info(self, x):
-        return (math.floor(x), x - math.floor(x))
 
     def fade(self, x):
         return 6 * x ** 5 - 15 * x ** 4 + 10 * x ** 3
 
-    def get_gradient(self, x):
+
+    def get_gradient_1d(self, x):
         
         if x not in self.__gradient_1d_cache:
             rng = random.Random(self.__seed + x)
@@ -30,35 +29,35 @@ class PerlinNoise:
 
         return self.__gradient_1d_cache[x]
 
+
     def get_gradient_2d(self, x, y):
         key = (x, y)
 
         if key not in self.__gradient_2d_cache:
             value = self.__seed ^ (x * 614807543)
             value ^= y * 931469120
-            value = (value ^ (value >> 13)) * 961379052
+            value = (value ^ (value >> 13)) * 961379053
             self.__gradient_2d_cache[key] = config.GRADIENTS_2D[value % 8]
 
         return self.__gradient_2d_cache[key]
+
     
     def noise1D(self, x):
-        cell_info = self.get_cell_info(x)
 
-        left = cell_info[0]
-        right = left + 1
+        x0 = math.floor(x)
+        x1 = x0 + 1
+        dx = x - x0
 
-        distance_left = cell_info[1]
-        distance_right = distance_left - 1
+        g0 = self.get_gradient_1d(x0)
+        g1 = self.get_gradient_1d(x1)
 
-        left_gradient = self.get_gradient(left)
-        right_gradient = self.get_gradient(right)
+        n0 = g0 * dx
+        n1 = g1 * (dx-1)
 
-        left_influence = left_gradient * distance_left
-        right_influence = right_gradient * distance_right
+        fade = self.fade(dx)
 
-        fade = self.fade(distance_left)
+        return self.lerp(n0, n1, fade)
 
-        return self.lerp(left_influence, right_influence, fade)
 
     def noise2D(self, x, y):
         x0 = math.floor(x)
@@ -70,32 +69,27 @@ class PerlinNoise:
         dy = y - y0
 
         # Get gradient at each corner
-        bottom_left_gradient = self.get_gradient_2d(x0, y1)
-        top_left_gradient = self.get_gradient_2d(x0, y0)
-        bottom_right_gradient = self.get_gradient_2d(x1, y1)
-        top_right_gradient = self.get_gradient_2d(x1, y0)
+        g00 = self.get_gradient_2d(x0, y0)
+        g01 = self.get_gradient_2d(x0, y1)
+        g10 = self.get_gradient_2d(x1, y0)
+        g11 = self.get_gradient_2d(x1, y1)
 
-        bottom_left_distance = (dx, dy)
-        bottom_right_distance = (dx - 1, dy)
-        top_left_distance = (dx, dy - 1)
-        top_right_distance = (dx - 1, dy - 1)
-
-        bottom_left_influence = bottom_left_distance[0] * bottom_left_gradient[0] + bottom_left_distance[1] * bottom_left_gradient[1]
-        bottom_right_influence = bottom_right_distance[0] * bottom_right_gradient[0] + bottom_right_distance[1] * bottom_right_gradient[1]
-        top_left_influence = top_left_distance[0] * top_left_gradient[0] + top_left_distance[1] * top_left_gradient[1]
-        top_right_influence = top_right_distance[0] * top_right_gradient[0] + top_right_distance[1] * top_right_gradient[1]
+        # Dot product to calculate gradient influence
+        n00 = dx * g00[0] + dy * g00[1]
+        n01 = dx * g01[0] + (dy-1) * g01[1]
+        n10 = (dx-1) * g10[0] + dy * g10[1]
+        n11 = (dx-1) * g11[0] + (dy-1) * g11[1]
 
         fade_x = self.fade(dx)
         fade_y = self.fade(dy)
 
-        bottom = self.lerp(bottom_left_influence, bottom_right_influence, fade_x)
-        top = self.lerp(top_left_influence, top_right_influence, fade_x)
+        top = self.lerp(n00, n10, fade_x)
+        bottom = self.lerp(n01, n11, fade_x)
 
-        return self.lerp(bottom, top, fade_y)
+        return self.lerp(top, bottom, fade_y)
 
 
 class Chunk:
-
     def __init__(self, coordinates: tuple, tiles: list | None = None, modified: bool = False) -> None:
 
         if tiles is None:
@@ -178,10 +172,10 @@ class Chunk:
 
 
 class World:
+    # CONSTRUCTOR
 
     def __init__(self, name, seed) -> None:
         self.__name = name
-        self.__seed = seed
         self.__perlin_noise = PerlinNoise(seed)
 
         with open("data/tiles.json", "r") as tile_data:
@@ -194,21 +188,15 @@ class World:
 
         self.__surface_heights = {}
         self.__stone_heights = {}
-        self.__ore_thresholds = self.generate_ore_thresholds()
+        self.__ore_thresholds = self.__generate_ore_thresholds()
 
-        self.__chunks = self.load_saved_chunks()
+        self.__chunks = self.__load_saved_chunks()
         self.__chunk_queue = []
 
 
-    def get_or_create_chunk(self, chunk_coordinates: tuple) -> Chunk:
+    # CHUNK GENERATION
 
-        if chunk_coordinates not in self.__chunks:
-            self.__chunks[chunk_coordinates] = self.generate_chunk(chunk_coordinates)
-
-        return self.__chunks[chunk_coordinates]
-
-
-    def generate_chunk(self, chunk_coordinates: tuple) -> Chunk:
+    def __generate_chunk(self, chunk_coordinates: tuple) -> Chunk:
 
         chunk_x, chunk_y = chunk_coordinates
         chunk = Chunk(chunk_coordinates)
@@ -216,8 +204,8 @@ class World:
         for x in range(config.CHUNK_SIZE):
             world_x = chunk_x * config.CHUNK_SIZE + x 
 
-            surface_height = self.get_surface_height(world_x)
-            stone_height = self.get_stone_height(world_x)
+            surface_height = self.__get_surface_height(world_x)
+            stone_height = self.__get_stone_height(world_x)
 
             for y in range(config.CHUNK_SIZE):
                 world_y = chunk_y * config.CHUNK_SIZE + y
@@ -231,13 +219,15 @@ class World:
 
                 chunk.change_tile((x, y), tile_id, False)
 
-        self.generate_caves_for_chunk(chunk, chunk_coordinates, 100, 0.05)
-        self.generate_ore_for_chunk(chunk, chunk_coordinates, "2")
+        self.__generate_caves(chunk, chunk_coordinates)
+        self.__generate_ores(chunk, chunk_coordinates)
 
         chunk.mark_dirty()
 
         return chunk
 
+
+    # CHUNK LIFECYCLE
 
     def unload_far_chunks(self, player_rect) -> None:
         player_x = player_rect.centerx // config.TILE_SIZE
@@ -256,7 +246,9 @@ class World:
                 del self.__chunks[chunk_coordinates]
 
 
-    def generate_height(self, x: int, base_height: int, period: int, amplitude: int, layers: int) -> int:
+    # TERRAIN GENERATION
+
+    def __generate_height(self, x: int, base_height: int, period: int, amplitude: int, layers: int) -> int:
         
         height = 0
         octave_amplitude = 1
@@ -275,61 +267,118 @@ class World:
         return height
 
 
-    def get_surface_height(self, x: int) -> int:
+    def __get_surface_height(self, x: int) -> int:
         if x not in self.__surface_heights:
-            self.__surface_heights[x] = self.generate_height(x, config.WORLD_HEIGHT * config.CHUNK_SIZE // 2, 25, 25, 4)
+            self.__surface_heights[x] = self.__generate_height(x, config.WORLD_HEIGHT * config.CHUNK_SIZE // 2, 25, 25, 4)
         return self.__surface_heights[x]
 
 
-    def get_stone_height(self, x: int) -> int:
+    def __get_stone_height(self, x: int) -> int:
         if x not in self.__stone_heights:
-            self.__stone_heights[x] = self.generate_height(x, config.WORLD_HEIGHT * config.CHUNK_SIZE // 2 + 25, 40, 12, 3)
+            self.__stone_heights[x] = self.__generate_height(x, config.WORLD_HEIGHT * config.CHUNK_SIZE // 2 + 25, 40, 12, 3)
         return self.__stone_heights[x]
 
 
-    def generate_caves_for_chunk(self, chunk: Chunk, chunk_coordinates: tuple, period: int, threshold: float) -> None:
+    # CAVES AND ORES
+
+    def __generate_noise_for_chunk(self, chunk_coordinates: tuple, period: int, layers: int, count: int) -> list:
+
+        noise = []
+
+        for x in range(config.CHUNK_SIZE):
+
+            x_list = []
+
+            for y in range(config.CHUNK_SIZE):
+
+                world_x = config.WORLD_WIDTH * config.CHUNK_SIZE * count + chunk_coordinates[0] * config.CHUNK_SIZE + x 
+                world_y = config.WORLD_HEIGHT * config.CHUNK_SIZE * count + chunk_coordinates[1] * config.CHUNK_SIZE + y 
+
+                noise_value = 0
+                amplitude = 1
+                frequency = 1
+                maximum_amplitude = 0
+
+                for _ in range(layers):
+                    noise_value += self.__perlin_noise.noise2D(world_x / period * frequency, world_y / period * frequency) * amplitude
+                    maximum_amplitude += amplitude
+                    amplitude *= 0.5
+                    frequency *= 2
+
+                noise_value /= maximum_amplitude
+
+                x_list.append(noise_value)
+
+            noise.append(x_list)
+
+        return noise
+
+    
+    def __apply_noise_to_chunk(self, chunk: Chunk, chunk_coordinates: tuple, tile_id: int, noise_values: list, threshold: float, tiles_replaced: tuple, can_generate_here: list | None = None) -> None:
 
         for x in range(config.CHUNK_SIZE):
             for y in range(config.CHUNK_SIZE):
+
                 world_x = chunk_coordinates[0] * config.CHUNK_SIZE + x 
                 world_y = chunk_coordinates[1] * config.CHUNK_SIZE + y 
 
                 if world_y >= self.__surface_heights[world_x]:
-                    noise_value = self.__perlin_noise.noise2D(world_x / period, world_y / period)
+                    noise_value = noise_values[x][y]
 
-                    if abs(noise_value) <= threshold:
-                        chunk.change_tile((x, y), -1, False)
+                    if abs(noise_value) <= threshold and chunk.get_tile_id((x, y)) in tiles_replaced:
 
-    def generate_ore_thresholds(self) -> dict:
+                        if can_generate_here is None:
+                            chunk.change_tile((x, y), tile_id, False)
+
+                        else:
+                            if can_generate_here[x][y]:
+                                chunk.change_tile((x, y), tile_id, False)
+
+
+    def __generate_ore_thresholds(self) -> dict:
 
         ore_thresholds = {}
 
         for tile_id in self.__tile_data:
 
             ore_data = self.__tile_data[tile_id]
+
             if "ore_threshold" in ore_data:
                 ore_thresholds[tile_id] = ore_data["ore_threshold"]
 
         return ore_thresholds
 
 
-    def generate_ore_for_chunk(self, chunk: Chunk, chunk_coordinates: tuple, tile_id: str) -> None:
+    def __generate_caves(self, chunk: Chunk, chunk_coordinates: tuple) -> None:
 
-        tile_id_int = int(tile_id)
+        noise_values = self.__generate_noise_for_chunk(chunk_coordinates, 100, 2, -1)
+        self.__apply_noise_to_chunk(chunk, chunk_coordinates, -1, noise_values, config.CAVE_THRESHOLD, (0, 1))
+
+
+    def __generate_ores(self, chunk: Chunk, chunk_coordinates: tuple) -> None:
+
+        can_generate_here = self.__generate_noise_for_chunk(chunk_coordinates, 25, 1, -2)
 
         for x in range(config.CHUNK_SIZE):
             for y in range(config.CHUNK_SIZE):
-                
-                world_x = chunk_coordinates[0] * config.CHUNK_SIZE + x 
-                world_y = chunk_coordinates[1] * config.CHUNK_SIZE + y 
 
-                noise_value = self.__perlin_noise.noise2D(world_x / 25, world_y / 25)
+                if abs(can_generate_here[x][y]) <= 0.1:
+                    can_generate_here[x][y] = True
 
-                if abs(noise_value) <= self.__ore_thresholds[tile_id] and chunk.get_tile_id((x, y)) == 1:
-                    chunk.change_tile((x, y), tile_id_int)
+                else:
+                    can_generate_here[x][y] = False
+
+        thresholds = self.__generate_ore_thresholds()
+
+        for count, tile_id in enumerate(thresholds):
+
+            noise_values = self.__generate_noise_for_chunk(chunk_coordinates, 25, 2, count)
+            self.__apply_noise_to_chunk(chunk, chunk_coordinates, int(tile_id), noise_values, thresholds[tile_id], (1,), can_generate_here)
 
 
-    def queue_chunk(self, chunk_coordinates: tuple) -> None:
+    # CHUNK QUEUE
+
+    def __queue_chunk(self, chunk_coordinates: tuple) -> None:
         if chunk_coordinates in self.__chunks:
             return
 
@@ -356,7 +405,7 @@ class World:
                 chunk_coordinates = self.__chunk_queue.pop(0)
 
             if chunk_coordinates not in self.__chunks:
-                self.__chunks[chunk_coordinates] = self.generate_chunk(chunk_coordinates)
+                self.__chunks[chunk_coordinates] = self.__generate_chunk(chunk_coordinates)
 
 
     def queue_nearby_chunks(self, rect) -> None:
@@ -370,26 +419,28 @@ class World:
             for y in range(config.LOAD_DISTANCE + 1):
 
                 chunk_coordinates = (current_chunk[0] + x, current_chunk[1] + y)
-                self.queue_chunk(chunk_coordinates)
+                self.__queue_chunk(chunk_coordinates)
 
                 chunk_coordinates = (current_chunk[0] - x, current_chunk[1] + y)
-                self.queue_chunk(chunk_coordinates)
+                self.__queue_chunk(chunk_coordinates)
 
                 chunk_coordinates = (current_chunk[0] + x, current_chunk[1] - y)
-                self.queue_chunk(chunk_coordinates)
+                self.__queue_chunk(chunk_coordinates)
 
                 chunk_coordinates = (current_chunk[0] - x, current_chunk[1] - y)
-                self.queue_chunk(chunk_coordinates)
+                self.__queue_chunk(chunk_coordinates)
 
 
-    def which_chunk(self, coordinates: tuple) -> tuple:
+    # COORDINATES AND QUERIES
+
+    def which_chunk(self, world_coordinates: tuple) -> tuple:
         """Returns chunk coordinates based on world coordinates."""
-        return (coordinates[0] // config.CHUNK_SIZE, coordinates[1] // config.CHUNK_SIZE)
+        return (world_coordinates[0] // config.CHUNK_SIZE, world_coordinates[1] // config.CHUNK_SIZE)
 
 
-    def where_in_chunk(self, coordinates: tuple) -> tuple:
+    def where_in_chunk(self, world_coordinates: tuple) -> tuple:
         """Returns tile coordinates in chunk based on world coordinates."""
-        return (coordinates[0] % config.CHUNK_SIZE, coordinates[1] % config.CHUNK_SIZE)
+        return (world_coordinates[0] % config.CHUNK_SIZE, world_coordinates[1] % config.CHUNK_SIZE)
 
 
     def get_nearby_rects(self, rect, range_x: int, range_y: int) -> list:
@@ -417,7 +468,7 @@ class World:
         return nearby
 
 
-    def get_nearby_chunks(self, rect) -> dict:
+    def __get_nearby_chunks(self, rect) -> dict:
 
         world_position_x = rect.centerx // config.TILE_SIZE
         world_position_y = rect.centery // config.TILE_SIZE
@@ -444,7 +495,7 @@ class World:
 
 
     def render_world(self, player_rect, screen, camera) -> None:
-        chunks = self.get_nearby_chunks(player_rect)
+        chunks = self.__get_nearby_chunks(player_rect)
 
         for chunk in chunks.values():
             chunk.render(screen, camera, self.__tile_data)
@@ -461,6 +512,8 @@ class World:
     def get_chunks(self) -> dict:
         return self.__chunks
 
+
+    # SAVING AND LOADING
 
     def save_chunks(self) -> None:
 
@@ -480,8 +533,7 @@ class World:
             json.dump(saved_chunks, file)
 
 
-    def load_saved_chunks(self) -> dict:
-
+    def __load_saved_chunks(self) -> dict:
         chunks = {}
 
         path = f"saves/{self.__name}/chunks.json"
