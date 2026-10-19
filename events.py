@@ -5,14 +5,16 @@ import config
 
 
 class EventHandler:
-    def __init__(self, player, world, camera, drop_tile, inventory_ui):
+    def __init__(self, player, world, camera, drop_tile, drop_item, inventory_ui):
         self.__player = player
         self.__world = world 
         self.__camera = camera 
         self.__drop_tile = drop_tile
+        self.__drop_item = drop_item
         self.__inventory_ui = inventory_ui
         self.__break_target = None 
         self.__break_start = None 
+        self.__inventory_click = False
 
     def reset_mining(self) -> None:
         self.__break_target = None 
@@ -23,7 +25,21 @@ class EventHandler:
         self.__player.get_inventory().set_selected_slot(slot_num)
 
     def handle_inventory_state(self) -> None:
+        if self.__inventory_ui.is_open() and self.__player.get_hand() is not None:
+            self.__drop_item(self.__player.rect.right, self.__player.rect.y, self.__player.get_hand())
+            self.__player.set_hand(None)
+
         self.__inventory_ui.change_state()
+
+    def handle_inventory_click(self, event) -> None:
+        if not self.__inventory_ui.is_open() or event.button != 1:
+            return
+
+        slot = self.__inventory_ui.get_slot_at_position(event.pos)
+
+        if slot is not None:
+            self.__player.swap_hand_item(slot)
+            self.__inventory_click = True
 
     def handle_key_event(self, event) -> None:
         if event.key in range(48, 58):
@@ -108,13 +124,17 @@ class EventHandler:
 
     def handle_events(self) -> bool:
 
+        self.__inventory_click = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             elif event.type == pygame.KEYDOWN:
                 self.handle_key_event(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.handle_inventory_click(event)
 
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_pressed()[0] and not self.__inventory_click:
             self.handle_hold_left_click()
         else:
             self.reset_mining()

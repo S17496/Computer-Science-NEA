@@ -68,6 +68,35 @@ class InventoryUI:
                 x += self.__box_width
             y += self.__box_width
             x = config.HOTBAR_X
-        
+
+    def get_slot_at_position(self, mouse_position: tuple) -> int | None:
+        if not self.__open:
+            return None
+
+        mouse_x, mouse_y = mouse_position
+
+        for row in range(config.INVENTORY_SIZE // config.HOTBAR_SIZE):
+            for column in range(config.HOTBAR_SIZE):
+                slot = row * config.HOTBAR_SIZE + column
+                x = config.HOTBAR_X + column * self.__box_width
+                y = config.HOTBAR_Y + row * self.__box_width
+                slot_rect = pygame.Rect(x, y, self.__box_width, self.__box_width)
+
+                if slot_rect.collidepoint(mouse_x, mouse_y):
+                    return slot
+
+        return None
+
+    def render_hand_item(self, screen, item) -> None:
+        if not self.__open or item is None:
+            return
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        image = pygame.image.load(item.get_texture())
+        screen.blit(image, (mouse_x, mouse_y))
+
+    def is_open(self) -> bool:
+        return self.__open
+
     def change_state(self) -> None:
         self.__open = not(self.__open)

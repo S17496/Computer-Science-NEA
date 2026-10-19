@@ -3,6 +3,7 @@ import inventory
 import entities
 import items
 import config
+import crafting
 
 
 class Player(entities.Entity):
@@ -10,9 +11,13 @@ class Player(entities.Entity):
     def __init__(self, x: int, y: int, image: str) -> None:
         super().__init__(x, y, image)
 
-        # Inventory
+        # Inventory and crafting
         self.__inventory = inventory.Inventory()
         self.__inventory.add_item(items.Pickaxe("100", 1))
+
+        self.__hand = None
+
+        self.__crafting = crafting.Crafting()
 
         # Movement
         self.__vel_x = 0
@@ -35,6 +40,22 @@ class Player(entities.Entity):
 
     def get_bottom_right_coordinates(self) -> tuple:
         return ((self.rect.x + config.PLAYER_WIDTH) // config.TILE_SIZE, (self.rect.y + config.PLAYER_HEIGHT) // config.TILE_SIZE)
+
+    def set_hand(self, item: items.Item | None):
+        self.__hand = item
+
+    def get_hand(self) -> items.Item | None:
+        return self.__hand
+
+    def swap_hand_item(self, slot: int) -> None:
+        
+        if slot < 0 or slot >= config.INVENTORY_SIZE:
+            return
+
+        inventory_items = self.__inventory.get_items()
+        slot_item = inventory_items[slot]
+        inventory_items[slot] = self.__hand
+        self.__hand = slot_item
 
 
     def update(self, tiles: list, item_entities: list) -> None:
@@ -101,7 +122,6 @@ class Player(entities.Entity):
 
             if items[i].get_quantity() == 0:
                 self.__inventory.remove_item(i)
-
 
 
 

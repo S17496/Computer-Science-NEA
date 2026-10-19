@@ -229,6 +229,13 @@ class World:
 
     # CHUNK LIFECYCLE
 
+    def update(self, player_rect, maximum_chunks: int = 1) -> None:
+        """Keep the chunks around the player loaded and remove distant ones."""
+        self.queue_nearby_chunks(player_rect)
+        self.process_chunk_queue(player_rect, maximum_chunks)
+        self.unload_far_chunks(player_rect)
+
+
     def unload_far_chunks(self, player_rect) -> None:
         player_x = player_rect.centerx // config.TILE_SIZE
         player_y = player_rect.centery // config.TILE_SIZE
