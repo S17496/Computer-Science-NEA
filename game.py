@@ -34,13 +34,13 @@ class Game:
                 self.__menu.main_menu()
 
             elif menu_state == "create world":
-                self.__world = self.__menu.create_world()
+                self.__world = self.__menu.create_world_menu()
 
             elif menu_state == "select world":
-                self.__world = self.__menu.select_world()
+                self.__world = self.__menu.select_world_menu()
 
             elif menu_state == "select player":
-                self.__player = self.__menu.select_player()
+                self.__player = self.__menu.select_player_menu()
 
             elif menu_state == "play" and self.__player is not None and self.__world is not None:
                 self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, self.drop_tile, self.drop_item, self.__inventory_ui)
