@@ -165,6 +165,7 @@ class Chunk:
 
     def mark_dirty(self) -> None:
         self.__dirty = True
+        self.__modified = True
 
 
     def get_tiles(self) -> list:
@@ -176,6 +177,7 @@ class World:
 
     def __init__(self, name, seed) -> None:
         self.__name = name
+        self.__seed = seed
         self.__perlin_noise = PerlinNoise(seed)
 
         with open("data/tiles.json", "r") as tile_data:
@@ -522,43 +524,43 @@ class World:
 
     # SAVING AND LOADING
 
-    def save_chunks(self) -> None:
+    def save_world(self) -> None:
+            
+        save_path = f"saves/{self.__name}"
 
-        saved_chunks = {}
+        payload = {"name": self.__name, "seed": self.__seed, "chunks": {}}
 
-        for chunk_coordinates in self.__chunks:
-
-            chunk = self.__chunks[chunk_coordinates]
+        for chunk_coordinates, chunk in self.__chunks.items():
 
             if not(chunk.get_modified()):
                 continue
 
             key = f"{chunk_coordinates[0]},{chunk_coordinates[1]}"
-            saved_chunks[key] = chunk.get_tiles()
+            payload["chunks"][key] = chunk.get_tiles()
 
-        with open(f"saves/{self.__name}/chunks.json", "w") as file:
-            json.dump(saved_chunks, file)
+        with open(save_path, "w") as file:
+            json.dump(payload, file)
 
 
     def __load_saved_chunks(self) -> dict:
+
         chunks = {}
 
-        path = f"saves/{self.__name}/chunks.json"
+        save_path = f"saves/{self.__name}"
 
         try:
-            with open(path, "r") as file:
-                file = json.load(file)
-
-            for key in file:
-                x, y = map(int, key.split(","))
-                chunk = Chunk((x, y), file[key], True)
-                chunks[(x, y)] = chunk
+            with open(save_path, "r") as file:
+                data = json.load(file)
 
         except FileNotFoundError:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(save_path, "w") as file:
+                json.dump({"name": self.__name, "seed": self.__seed, "chunks": {}}, file)
+            return chunks
 
-            with open(path, "w") as file:
-                json.dump({}, file)
+        for key, tiles in data.get("chunks", {}).items():
+            x, y = map(int, key.split(","))
+            chunk = Chunk((x, y), tiles, True)
+            chunks[(x, y)] = chunk
 
         return chunks
 
