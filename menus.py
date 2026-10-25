@@ -4,7 +4,7 @@ import player
 import inventoryUI
 import pygame_gui
 
-class Menu:
+class MainMenu:
     def __init__(self, screen, clock):
 
         self.__screen = screen
@@ -212,3 +212,8 @@ class Menu:
             manager.draw_ui(self.__screen)
             pygame.display.flip()
 
+
+
+class GameMenu:
+    def __init__(self):
+        pass

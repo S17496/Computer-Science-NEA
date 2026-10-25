@@ -32,6 +32,7 @@ class Item:
     def copy(self):
         return self.__class__(self._id, self._quantity)
 
+
 class Pickaxe(Item):
     def __init__(self, id: str, quantity: int) -> None:
         super().__init__(id, quantity)
@@ -42,6 +43,7 @@ class Pickaxe(Item):
 
     def get_pickaxe_speed(self) -> int:
         return self.__pickaxe_speed
+
 
 class TileItem(Item):
     def __init__(self, id: str, quantity: str) -> None:

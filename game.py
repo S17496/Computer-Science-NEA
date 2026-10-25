@@ -8,7 +8,7 @@ import items
 import entities
 import events
 import json
-import menu
+import menus
 
 class Game:
     def __init__(self):
@@ -22,7 +22,7 @@ class Game:
         self.__event_handler = None
         self.__camera = camera.Camera()
         self.__inventory_ui = inventoryUI.InventoryUI(pygame.font.Font(None, 32))
-        self.__menu = menu.Menu(self.__screen, self.__clock)
+        self.__menu = menus.MainMenu(self.__screen, self.__clock)
         
 
     def run(self):
@@ -45,6 +45,7 @@ class Game:
             elif menu_state == "play" and self.__player is not None and self.__world is not None:
                 self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, self.drop_tile, self.drop_item, self.__inventory_ui)
                 self.play()
+                self.__world.save_world()
                 return
 
             else:

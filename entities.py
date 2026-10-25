@@ -60,7 +60,6 @@ class ItemEntity(Entity):
             self.kill()
 
 
-    
 
 class Enemy(Entity):
     # Constructor
@@ -69,6 +68,7 @@ class Enemy(Entity):
 
     def movement(self) -> None:
         return
+
 
 class Zombie(Enemy):
     def __init__(self, x: int, y: int, image: str) -> None:
