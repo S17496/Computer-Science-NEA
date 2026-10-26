@@ -2,9 +2,8 @@ import pygame
 import config
 
 class InventoryUI:
-    def __init__(self, font: pygame.font.Font) -> None:
-        self.__font = font
-        self.__box_width = 50
+    def __init__(self) -> None:
+        self.__box_width = config.UI_SCALE
         self.__open = False
 
     def render_hotbar(self, screen, hotbar_items: list, selected_slot: int) -> None:

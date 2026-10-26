@@ -1,7 +1,5 @@
 import pygame
 import config
-import world
-import player
 import camera
 import inventoryUI
 import items
@@ -9,6 +7,7 @@ import entities
 import events
 import json
 import menus
+import craftingUI
 
 class Game:
     def __init__(self):
@@ -21,7 +20,8 @@ class Game:
         self.__item_entities = pygame.sprite.Group()
         self.__event_handler = None
         self.__camera = camera.Camera()
-        self.__inventory_ui = inventoryUI.InventoryUI(pygame.font.Font(None, 32))
+        self.__inventory_ui = inventoryUI.InventoryUI()
+        self.__crafting_ui = craftingUI.CraftingUI()
         self.__menu = menus.MainMenu(self.__screen, self.__clock)
         
 
@@ -43,7 +43,7 @@ class Game:
                 self.__player = self.__menu.select_player_menu()
 
             elif menu_state == "play" and self.__player is not None and self.__world is not None:
-                self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, self.drop_tile, self.drop_item, self.__inventory_ui)
+                self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, self.drop_tile, self.drop_item, self.__inventory_ui, self.__crafting_ui)
                 self.play()
                 self.__world.save_world()
                 return
@@ -90,6 +90,7 @@ class Game:
 
             self.__inventory_ui.render_inventory(self.__screen, self.__player.get_inventory().get_items(), self.__player.get_inventory().get_selected_slot())
             self.__inventory_ui.render_hand_item(self.__screen, self.__player.get_hand())
+            self.__crafting_ui.render_recipes(self.__screen, self.__player.get_inventory(), self.__inventory_ui)
         
             pygame.display.update()
 

@@ -5,13 +5,14 @@ import config
 
 
 class EventHandler:
-    def __init__(self, player, world, camera, drop_tile, drop_item, inventory_ui):
+    def __init__(self, player, world, camera, drop_tile, drop_item, inventory_ui, crafting_ui):
         self.__player = player
         self.__world = world 
         self.__camera = camera 
         self.__drop_tile = drop_tile
         self.__drop_item = drop_item
         self.__inventory_ui = inventory_ui
+        self.__crafting_ui = crafting_ui
         self.__break_target = None 
         self.__break_start = None 
         self.__inventory_click = False
@@ -78,6 +79,16 @@ class EventHandler:
         chunk.change_tile(coordinates_in_chunk, int(item.get_id()))
 
 
+    def __handle_crafting(self) -> None:
+
+        mouse_pos = pygame.mouse.get_pos()
+
+        slot = self.__crafting_ui.get_slot_at_position(mouse_pos, self.__inventory_ui)
+
+        if slot is None:
+            return
+
+        
 
 
     def handle_hold_left_click(self) -> None:
@@ -127,10 +138,13 @@ class EventHandler:
         self.__inventory_click = False
 
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 return False
+            
             elif event.type == pygame.KEYDOWN:
                 self.handle_key_event(event)
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.handle_inventory_click(event)
 
