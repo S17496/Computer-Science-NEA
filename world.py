@@ -3,7 +3,6 @@ import config
 import math
 import random
 import json
-import os 
 
 
 class PerlinNoise:
@@ -195,6 +194,8 @@ class World:
         self.__chunks = self.__load_saved_chunks()
         self.__chunk_queue = []
 
+        self.__static_entities = []
+
 
     # CHUNK GENERATION
 
@@ -225,6 +226,16 @@ class World:
         self.__generate_ores(chunk, chunk_coordinates)
 
         chunk.mark_dirty()
+
+        return chunk
+
+
+    def __get_or_generate_chunk(self, chunk_coordinates: tuple) -> Chunk:
+        chunk = self.__chunks.get(chunk_coordinates)
+
+        if chunk is None:
+            chunk = self.__generate_chunk(chunk_coordinates)
+            self.__chunks[chunk_coordinates] = chunk
 
         return chunk
 
@@ -385,6 +396,33 @@ class World:
             self.__apply_noise_to_chunk(chunk, chunk_coordinates, int(tile_id), noise_values, thresholds[tile_id], (1,), can_generate_here)
 
 
+    # STATIC ENTITIES
+
+    def __add_static_entity(self, entity, world_coordinates: tuple) -> bool:
+        
+        width, height = entity.get_dimensions()
+        world_x, world_y = world_coordinates
+
+        for x in range(width):
+            for y in range(height):
+
+                chunk_coordinates = self.which_chunk((world_x + x, world_y + y))
+                coordinates_in_chunk = self.where_in_chunk((world_x + x, world_y + y))
+
+                chunk = self.__get_or_generate_chunk(chunk_coordinates)
+
+                if chunk.get_tile_id(coordinates_in_chunk) != -1:
+                    return False
+
+        self.__static_entities.append(entity)
+
+
+    def __update_static_entities(self, screen, camera) -> None:
+
+        for entity in self.__static_entities:
+            entity.update(screen, camera)
+    
+
     # CHUNK QUEUE
 
     def __queue_chunk(self, chunk_coordinates: tuple) -> None:
@@ -504,6 +542,9 @@ class World:
 
 
     def render_world(self, player_rect, screen, camera) -> None:
+
+        self.__update_static_entities(screen, camera)
+
         chunks = self.__get_nearby_chunks(player_rect)
 
         for chunk in chunks.values():

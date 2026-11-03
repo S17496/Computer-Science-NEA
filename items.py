@@ -23,6 +23,15 @@ class Item:
     def set_quantity(self, quantity: int) -> None:
         self._quantity = quantity
 
+    def add_one(self) -> bool:
+        """Adds one to item quantity without exceeding max stack."""
+
+        if self._quantity < self._max_stack:
+            self._quantity += 1
+            return True
+
+        return False
+
     def get_id(self) -> str:
         return self._id
 

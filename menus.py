@@ -3,7 +3,6 @@ import os
 import json
 import world
 import player
-import inventoryUI
 import pygame_gui
 
 

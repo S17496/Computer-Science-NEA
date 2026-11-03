@@ -4,8 +4,8 @@ class Camera:
         self.__y = 0
 
     def move_camera(self, target_x: int, target_y: int) -> None:
-        self.__x += (target_x - self.__x) * 0.1
-        self.__y += (target_y - self.__y) * 0.1
+        self.__x += (target_x - self.__x) * 0.2
+        self.__y += (target_y - self.__y) * 0.2
 
     # Getters and setters
 

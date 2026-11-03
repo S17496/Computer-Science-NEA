@@ -5,7 +5,8 @@ import config
 
 
 class EventHandler:
-    def __init__(self, player, world, camera, drop_tile, drop_item, inventory_ui, crafting_ui):
+
+    def __init__(self, player, world, camera, drop_tile, drop_item, inventory_ui, crafting_ui, crafting):
         self.__player = player
         self.__world = world 
         self.__camera = camera 
@@ -13,6 +14,7 @@ class EventHandler:
         self.__drop_item = drop_item
         self.__inventory_ui = inventory_ui
         self.__crafting_ui = crafting_ui
+        self.__crafting = crafting
         self.__break_target = None 
         self.__break_start = None 
         self.__inventory_click = False
@@ -88,10 +90,19 @@ class EventHandler:
         if slot is None:
             return
 
+        hand = self.__player.get_hand()
+
+        item_id = self.__crafting_ui.get_item_id(slot)
+
+        if hand is None or hand.get_id() == item_id:
+            self.__crafting.craft(item_id, self.__player)
         
 
 
     def handle_hold_left_click(self) -> None:
+
+        self.__handle_crafting()
+
         # Breaking blocks
         
         selected_item = self.__player.get_inventory().get_selected_item()
