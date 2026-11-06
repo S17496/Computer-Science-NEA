@@ -396,7 +396,7 @@ class World:
             self.__apply_noise_to_chunk(chunk, chunk_coordinates, int(tile_id), noise_values, thresholds[tile_id], (1,), can_generate_here)
 
 
-    # STATIC ENTITIES
+    # ENTITIES
 
     def __add_static_entity(self, entity, world_coordinates: tuple) -> bool:
         
