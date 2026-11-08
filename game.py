@@ -25,6 +25,9 @@ class Game:
         self.__crafting_ui = hud.CraftingUI()
         self.__crafting = crafting.Crafting()
         self.__menu = menus.MainMenu(self.__screen, self.__clock)
+
+        self.__max_x = None 
+        self.__max_y = None
         
 
     def run(self):
@@ -36,10 +39,21 @@ class Game:
                 self.__menu.main_menu()
 
             elif menu_state == "create world":
+
                 self.__world = self.__menu.create_world_menu()
 
+                if self.__world is not None:
+                    self.__max_x = self.__world.get_dimensions()[0] * config.CHUNK_SIZE * config.TILE_SIZE
+                    self.__max_y = self.__world.get_dimensions()[1] * config.CHUNK_SIZE * config.TILE_SIZE
+
             elif menu_state == "select world":
+
                 self.__world = self.__menu.select_world_menu()
+
+                if self.__world is not None:
+                    self.__max_x = self.__world.get_dimensions()[0] * config.CHUNK_SIZE * config.TILE_SIZE
+                    self.__max_y = self.__world.get_dimensions()[1] * config.CHUNK_SIZE * config.TILE_SIZE
+                
 
             elif menu_state == "select player":
                 self.__player = self.__menu.select_player_menu()
@@ -68,7 +82,7 @@ class Game:
             self.__world.update(self.__player.rect)
 
             nearby_tiles = self.__world.get_nearby_rects(self.__player.rect, 10, 10)
-            self.__player.update(nearby_tiles, self.__item_entities)
+            self.__player.update(nearby_tiles, self.__item_entities, self.__max_x, self.__max_y)
 
             for dropped_item in self.__item_entities:
                 nearby_tiles = self.__world.get_nearby_rects(dropped_item.rect, 2, 3)

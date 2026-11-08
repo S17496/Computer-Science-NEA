@@ -174,9 +174,11 @@ class Chunk:
 class World:
     # CONSTRUCTOR
 
-    def __init__(self, name, seed) -> None:
+    def __init__(self, name: str, seed: int, size: str) -> None:
         self.__name = name
         self.__seed = seed
+        self.__size = size
+        self.__dimensions = self.__select_size(size)
         self.__perlin_noise = PerlinNoise(seed)
 
         with open("data/tiles.json", "r") as tile_data:
@@ -231,6 +233,10 @@ class World:
 
 
     def __get_or_generate_chunk(self, chunk_coordinates: tuple) -> Chunk:
+
+        if not self.__chunk_is_inside_world(chunk_coordinates):
+            return None
+
         chunk = self.__chunks.get(chunk_coordinates)
 
         if chunk is None:
@@ -238,6 +244,15 @@ class World:
             self.__chunks[chunk_coordinates] = chunk
 
         return chunk
+
+
+    def __chunk_is_inside_world(self, chunk_coordinates: tuple) -> bool:
+        """Checks if a chunk should be generated based on the world size and the chunk's coordinates."""
+
+        chunk_x, chunk_y = chunk_coordinates
+        width, height = self.__dimensions
+
+        return chunk_x < width and chunk_y < height and chunk_x >= 0 and chunk_y >= 0
 
 
     # CHUNK LIFECYCLE
@@ -289,13 +304,13 @@ class World:
 
     def __get_surface_height(self, x: int) -> int:
         if x not in self.__surface_heights:
-            self.__surface_heights[x] = self.__generate_height(x, config.WORLD_HEIGHT * config.CHUNK_SIZE // 2, 25, 25, 4)
+            self.__surface_heights[x] = self.__generate_height(x, self.__dimensions[1] * config.CHUNK_SIZE // 2, 25, 25, 4)
         return self.__surface_heights[x]
 
 
     def __get_stone_height(self, x: int) -> int:
         if x not in self.__stone_heights:
-            self.__stone_heights[x] = self.__generate_height(x, config.WORLD_HEIGHT * config.CHUNK_SIZE // 2 + 25, 40, 12, 3)
+            self.__stone_heights[x] = self.__generate_height(x, self.__dimensions[1] * config.CHUNK_SIZE // 2 + 25, 40, 12, 3)
         return self.__stone_heights[x]
 
 
@@ -311,8 +326,8 @@ class World:
 
             for y in range(config.CHUNK_SIZE):
 
-                world_x = config.WORLD_WIDTH * config.CHUNK_SIZE * count + chunk_coordinates[0] * config.CHUNK_SIZE + x 
-                world_y = config.WORLD_HEIGHT * config.CHUNK_SIZE * count + chunk_coordinates[1] * config.CHUNK_SIZE + y 
+                world_x = self.__dimensions[0] * config.CHUNK_SIZE * count + chunk_coordinates[0] * config.CHUNK_SIZE + x 
+                world_y = self.__dimensions[1] * config.CHUNK_SIZE * count + chunk_coordinates[1] * config.CHUNK_SIZE + y 
 
                 noise_value = 0
                 amplitude = 1
@@ -426,6 +441,10 @@ class World:
     # CHUNK QUEUE
 
     def __queue_chunk(self, chunk_coordinates: tuple) -> None:
+        
+        if not self.__chunk_is_inside_world(chunk_coordinates):
+            return
+        
         if chunk_coordinates in self.__chunks:
             return
 
@@ -433,6 +452,8 @@ class World:
             return
 
         self.__chunk_queue.append(chunk_coordinates)
+
+        print("queued:", chunk_coordinates)
 
 
     def process_chunk_queue(self, rect, maximum_chunks: int) -> None:
@@ -453,6 +474,11 @@ class World:
 
             if chunk_coordinates not in self.__chunks:
                 self.__chunks[chunk_coordinates] = self.__generate_chunk(chunk_coordinates)
+
+            print(
+            "player chunk:", (rect_x, rect_y),
+            "generated:", chunk_coordinates,
+            "loaded:", len(self.__chunks))
 
 
     def queue_nearby_chunks(self, rect) -> None:
@@ -563,13 +589,16 @@ class World:
         return self.__chunks
 
 
+    def get_dimensions(self) -> tuple:
+        return self.__dimensions
+
     # SAVING AND LOADING
 
     def save_world(self) -> None:
             
         save_path = f"saves/{self.__name}"
 
-        payload = {"name": self.__name, "seed": self.__seed, "chunks": {}}
+        payload = {"name": self.__name, "seed": self.__seed, "size": self.__size, "chunks": {}}
 
         for chunk_coordinates, chunk in self.__chunks.items():
 
@@ -595,7 +624,12 @@ class World:
 
         except FileNotFoundError:
             with open(save_path, "w") as file:
-                json.dump({"name": self.__name, "seed": self.__seed, "chunks": {}}, file)
+                json.dump({
+                    "name": self.__name,
+                    "seed": self.__seed,
+                    "size": self.__size,
+                    "chunks": {}
+                }, file)
             return chunks
 
         for key, tiles in data.get("chunks", {}).items():
@@ -605,4 +639,15 @@ class World:
 
         return chunks
 
-            
+
+    def __select_size(self, size) -> tuple:
+        """Returns dimensions based on size of world."""
+
+        if size == "small":
+            return config.SMALL_WORLD
+        
+        if size == "medium":
+                    return config.MEDIUM_WORLD
+        
+        else:
+            return config.LARGE_WORLD

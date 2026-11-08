@@ -13,6 +13,7 @@ class MainMenu:
         self.__clock = clock
 
         self.__state = "main menu"
+        self.__world_size = None
 
 
     def get_state(self) -> str:
@@ -43,8 +44,13 @@ class MainMenu:
         back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 550), (190, 60)), text="Back", manager=manager)
         create_world_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 650), (190, 60)), text="Create world", manager=manager)
 
+        create_world_button_function = self.__set_state_create_world
+
+        if len(world_names) == 5:
+            create_world_button_function = lambda: None
+
         buttons = {back_button: self.__set_state_main_menu,
-                   create_world_button: self.__set_state_create_world}
+                   create_world_button: create_world_button_function}
 
         y = 200
         for world_name in world_names:
@@ -61,13 +67,19 @@ class MainMenu:
 
         name_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 250), (400, 60)), manager=manager)
         seed_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 350), (400, 60)), manager=manager)
-        size_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 450), (400, 60)), manager=manager)
+        
+        small_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 450), (120, 60)), text="Small", manager=manager)
+        medium_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1135, 450), (120, 60)), text="Medium", manager=manager)
+        large_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1270, 450), (120, 60)), text="Large", manager=manager)
 
         create_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 550), (190, 60)), text="Create world", manager=manager)
         back_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1210, 550), (190, 60)), text="Back", manager=manager)
 
-        buttons = {create_button: lambda: self.__create_world(name_box, seed_box, size_box),
-                   back_button: self.__set_state_select_world}
+        buttons = {create_button: lambda: self.__create_world(name_box, seed_box),
+                   back_button: self.__set_state_select_world,
+                   small_button: self.__select_small,
+                   medium_button: self.__select_medium,
+                   large_button: self.__select_large}
 
         return self.__menu_logic(buttons, manager)
 
@@ -119,29 +131,43 @@ class MainMenu:
 
     def __select_world(self, world_name) -> world.World:
 
+        self.__world_size = None
+
         with open(f"saves/{world_name}", "r") as file:
             save_data = json.load(file)
 
         self.__set_state_select_player()
-        return world.World(world_name, save_data["seed"])
+
+        return world.World(world_name, save_data["seed"], save_data["size"])
 
 
-    def __create_world(self, name_box, seed_box, size_box) -> world.World:
+    def __create_world(self, name_box, seed_box) -> world.World:
 
         name = name_box.get_text()
         seed = int(seed_box.get_text())
-        size = size_box.get_text()
 
         self.__set_state_select_world()
 
-        return world.World(name, seed)
+        return world.World(name, seed, self.__world_size)
 
 
     def __select_player(self) -> player.Player:
 
         self.__set_state_play()
 
-        return player.Player(0, 0, "player.png")
+        return player.Player(16 * 16 * 10, 400, "player.png")
+
+
+    def __select_small(self) -> None:
+        self.__world_size = "small"
+
+
+    def __select_medium(self) -> None:
+        self.__world_size = "medium"
+
+
+    def __select_large(self) -> None:
+        self.__world_size = "large"
 
 
     def __set_state_main_menu(self) -> None:

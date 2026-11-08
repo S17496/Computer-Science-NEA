@@ -12,8 +12,8 @@ class Player(entities.Entity):
         super().__init__(x, y, image)
 
         # Health
-        self.__max_health = 100
-        self.__health = 100
+        self.__max_health = 1000000
+        self.__health = 1000000
         self.__regeneration = 0
         self.__spawn_point = (x, y)
         self.__fall_damage_multiplier = 0.2
@@ -74,15 +74,15 @@ class Player(entities.Entity):
         return self.__max_health
     
 
-    def update(self, tiles: list, item_entities: list) -> None:
+    def update(self, tiles: list, item_entities: list, max_x: int, max_y: int) -> None:
 
         self.__handle_keys()
 
         self.__handle_gravity()
 
-        self.__horizontal_movement(tiles)
+        self.__horizontal_movement(tiles, max_x)
 
-        self.__vertical_movement(tiles)
+        self.__vertical_movement(tiles, max_y)
 
 
         # Item pickup
@@ -128,7 +128,7 @@ class Player(entities.Entity):
             self.__vel_y = 50
 
 
-    def __horizontal_movement(self, tiles) -> None:
+    def __horizontal_movement(self, tiles: list, max_x: int) -> None:
         """Moves player horizontally by number of pixels equal to its horizontal velocity."""
 
         for _ in range(abs(int(self.__vel_x))):
@@ -150,10 +150,11 @@ class Player(entities.Entity):
                     elif self.__vel_x < 0:
                         self.rect.left = rect.right
 
-                    return
+            self.rect.left = max(0, self.rect.left)
+            self.rect.right = min(max_x, self.rect.right)
 
 
-    def __vertical_movement(self, tiles) -> None:
+    def __vertical_movement(self, tiles: list, max_y: int) -> None:
         """Moves player vertically by number of pixels equal to its vertical velocity."""
 
         self.__on_ground = False
@@ -165,6 +166,17 @@ class Player(entities.Entity):
 
             elif self.__vel_y < 0:
                 self.rect.y -= 1
+
+            if self.rect.bottom > max_y:
+                self.rect.bottom = max_y
+                self.__vel_y = 0
+                self.__on_ground = True
+                return
+
+            elif self.rect.top < 0:
+                self.rect.top = 0
+                self.__vel_y = 0
+                return
 
             # Vertical collisions
 
