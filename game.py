@@ -89,7 +89,7 @@ class Game:
                 dropped_item.update(nearby_tiles, self.__item_entities)
 
             # Camera movement
-            self.__camera.move_camera(self.__player.rect.centerx - config.SCREEN_WIDTH//2, self.__player.rect.centery - config.SCREEN_HEIGHT//2)
+            self.__camera.move_camera(self.__player.rect.centerx - config.SCREEN_WIDTH//2, self.__player.rect.centery - config.SCREEN_HEIGHT//2, self.__max_x, self.__max_y)
 
             # Draw background
             self.__screen.fill((0,0,150))

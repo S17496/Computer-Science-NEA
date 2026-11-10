@@ -14,6 +14,8 @@ class MainMenu:
 
         self.__state = "main menu"
         self.__world_size = None
+        self.__world_name = ""
+        self.__world_seed = ""
 
 
     def get_state(self) -> str:
@@ -65,8 +67,8 @@ class MainMenu:
 
         manager = pygame_gui.UIManager(self.__screen.get_size())
 
-        name_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 250), (400, 60)), manager=manager)
-        seed_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 350), (400, 60)), manager=manager)
+        name_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 250), (400, 60)), initial_text=self.__world_name, manager=manager)
+        seed_box = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((1000, 350), (400, 60)), initial_text=self.__world_seed, manager=manager)
         
         small_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1000, 450), (120, 60)), text="Small", manager=manager)
         medium_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((1135, 450), (120, 60)), text="Medium", manager=manager)
@@ -77,9 +79,9 @@ class MainMenu:
 
         buttons = {create_button: lambda: self.__create_world(name_box, seed_box),
                    back_button: self.__set_state_select_world,
-                   small_button: self.__select_small,
-                   medium_button: self.__select_medium,
-                   large_button: self.__select_large}
+                   small_button: lambda: self.__select_size("small", name_box, seed_box),
+                   medium_button: lambda: self.__select_size("medium", name_box, seed_box),
+                   large_button: lambda: self.__select_size("large", name_box, seed_box)}
 
         return self.__menu_logic(buttons, manager)
 
@@ -158,16 +160,10 @@ class MainMenu:
         return player.Player(16 * 16 * 10, 400, "player.png")
 
 
-    def __select_small(self) -> None:
-        self.__world_size = "small"
-
-
-    def __select_medium(self) -> None:
-        self.__world_size = "medium"
-
-
-    def __select_large(self) -> None:
-        self.__world_size = "large"
+    def __select_size(self, size, name_box, seed_box) -> None:
+        self.__world_size = size
+        self.__world_name = name_box.get_text()
+        self.__world_seed = seed_box.get_text()
 
 
     def __set_state_main_menu(self) -> None:
@@ -175,6 +171,10 @@ class MainMenu:
 
 
     def __set_state_select_world(self) -> None:
+
+        self.__world_name = ""
+        self.__world_seed = ""
+        
         self.__state = "select world"
 
 
