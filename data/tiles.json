@@ -19,7 +19,10 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "2",
-        "ore_threshold": 0.01
+        "ore_threshold": 0.08,
+        "ore_noise_period": 10,
+        "ore_depth_min_fraction": 0.45,
+        "ore_depth_max_fraction": 0.78
     },
     "3": {
         "name": "Iron Ore",
@@ -27,7 +30,10 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "3",
-        "ore_threshold": 0.002
+        "ore_threshold": 0.055,
+        "ore_noise_period": 12,
+        "ore_depth_min_fraction": 0.58,
+        "ore_depth_max_fraction": 0.90
     },
     "4": {
         "name": "Diamond Ore",
@@ -35,7 +41,10 @@
         "required_pickaxe_power": 0,
         "hardness": 1,
         "item_id": "4",
-        "ore_threshold": 0.0004
+        "ore_threshold": 0.035,
+        "ore_noise_period": 14,
+        "ore_depth_min_fraction": 0.72,
+        "ore_depth_max_fraction": 1.00
     },
     "5": {
         "name": "Wood",

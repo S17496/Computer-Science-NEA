@@ -349,7 +349,7 @@ class World:
         return noise
 
     
-    def __apply_noise_to_chunk(self, chunk: Chunk, chunk_coordinates: tuple, tile_id: int, noise_values: list, threshold: float, tiles_replaced: tuple, can_generate_here: list | None = None) -> None:
+    def __apply_noise_to_chunk(self, chunk: Chunk, chunk_coordinates: tuple, tile_id: int, noise_values: list, threshold: float, tiles_replaced: tuple, can_generate_here: list | None = None, y_range: tuple | None = None) -> None:
 
         for x in range(config.CHUNK_SIZE):
             for y in range(config.CHUNK_SIZE):
@@ -360,7 +360,9 @@ class World:
                 if world_y >= self.__surface_heights[world_x]:
                     noise_value = noise_values[x][y]
 
-                    if abs(noise_value) <= threshold and chunk.get_tile_id((x, y)) in tiles_replaced:
+                    in_y_range = y_range is None or y_range[0] <= world_y <= y_range[1]
+
+                    if in_y_range and abs(noise_value) <= threshold and chunk.get_tile_id((x, y)) in tiles_replaced:
 
                         if can_generate_here is None:
                             chunk.change_tile((x, y), tile_id, False)
@@ -391,24 +393,31 @@ class World:
 
 
     def __generate_ores(self, chunk: Chunk, chunk_coordinates: tuple) -> None:
+        world_height = self.__dimensions[1] * config.CHUNK_SIZE
+        ore_number = 0
 
-        can_generate_here = self.__generate_noise_for_chunk(chunk_coordinates, 25, 1, -2)
+        eligibility_noise = self.__generate_noise_for_chunk(chunk_coordinates, 80, 2, -2)
+        can_generate_here = [
+            [abs(eligibility_noise[x][y]) <= 0.035 for y in range(config.CHUNK_SIZE)]
+            for x in range(config.CHUNK_SIZE)
+        ]
 
-        for x in range(config.CHUNK_SIZE):
-            for y in range(config.CHUNK_SIZE):
+        for tile_id in self.__tile_data:
+            ore_data = self.__tile_data[tile_id]
 
-                if abs(can_generate_here[x][y]) <= 0.1:
-                    can_generate_here[x][y] = True
+            if "ore_threshold" not in ore_data:
+                continue
 
-                else:
-                    can_generate_here[x][y] = False
+            period = ore_data.get("ore_noise_period", 25)
+            layers = 1
+            depth_min = ore_data.get("ore_depth_min_fraction", 0.0)
+            depth_max = ore_data.get("ore_depth_max_fraction", 1.0)
+            y_range = (int(world_height * depth_min), int(world_height * depth_max))
 
-        thresholds = self.__generate_ore_thresholds()
+            noise_values = self.__generate_noise_for_chunk(chunk_coordinates, period, layers, ore_number)
 
-        for count, tile_id in enumerate(thresholds):
-
-            noise_values = self.__generate_noise_for_chunk(chunk_coordinates, 25, 2, count)
-            self.__apply_noise_to_chunk(chunk, chunk_coordinates, int(tile_id), noise_values, thresholds[tile_id], (1,), can_generate_here)
+            self.__apply_noise_to_chunk(chunk, chunk_coordinates, int(tile_id), noise_values, ore_data["ore_threshold"], (1,), can_generate_here, y_range)
+            ore_number += 1
 
 
     # ENTITIES
