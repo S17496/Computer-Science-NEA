@@ -146,7 +146,51 @@ class MainMenu:
     def __create_world(self, name_box, seed_box) -> world.World:
 
         name = name_box.get_text()
-        seed = int(seed_box.get_text())
+
+        QUOTE = '"'
+
+        # Check for inappropriate characters
+        for character in " <>/\\|?*":
+            if character in name:
+                print(f"No {QUOTE}{character}{QUOTE} allowed in world name.")
+                self.__world_name = ""
+                self.__set_state_create_world
+                return
+
+        # Check for sensible world name length
+        if len(name) > 10 or len(name) == 0:
+            print("Max 10 character world name.")
+            self.__world_name = ""
+            self.__set_state_create_world
+            return
+
+        # Check for duplicate world name.
+        world_names = os.listdir("saves")
+        for world_name  in world_names:
+            if world_name == name:
+                print("No duplicate world names.")
+                self.__world_name = ""
+                self.__set_state_create_world
+                return
+
+        # Seed must be an integer.
+        try:
+            seed = int(seed_box.get_text())
+            if seed != int(seed):
+                raise ValueError
+            
+        except ValueError:
+            print("Seed must be an integer.")
+            self.__world_seed = ""
+            self.__set_state_create_world
+            return
+
+        # Seed must be within a certain range.
+        if seed > 1048576 or seed < 0:
+            print("Seed must be in range 0 < x < 1048576.")
+            self.__world_seed = ""
+            self.__set_state_create_world
+            return
 
         self.__set_state_select_world()
 
