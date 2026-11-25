@@ -23,6 +23,15 @@ class EventHandler:
         self.__break_target = None 
         self.__break_start = None 
 
+    def __is_in_interaction_range(self, tile_coordinates: tuple) -> bool:
+        tile_center = (tile_coordinates[0] * config.TILE_SIZE + config.TILE_SIZE / 2,
+                       tile_coordinates[1] * config.TILE_SIZE + config.TILE_SIZE / 2)
+        player_center = self.__player.rect.center
+        distance_x = player_center[0] - tile_center[0]
+        distance_y = player_center[1] - tile_center[1]
+        interaction_range = config.TILE_INTERACTION_RANGE * config.TILE_SIZE
+        return distance_x ** 2 + distance_y ** 2 <= interaction_range ** 2
+
     def handle_slot_switching(self, event) -> None:
         slot_num = (event.key - 39) % 10
         self.__player.get_inventory().set_selected_slot(slot_num)
@@ -61,6 +70,9 @@ class EventHandler:
         
         mouse_pos = pygame.mouse.get_pos()
         tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//config.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//config.TILE_SIZE))
+
+        if not self.__is_in_interaction_range(tile_coordinates):
+            return
 
         if tile_coordinates[0] >= player_pos1[0] and tile_coordinates[0] <= player_pos2[0] and tile_coordinates[1] >= player_pos1[1] and tile_coordinates[1] <= player_pos2[1]:
             return 
@@ -113,6 +125,10 @@ class EventHandler:
             
         mouse_pos = pygame.mouse.get_pos()
         tile_coordinates = (int((mouse_pos[0] + self.__camera.get_x())//config.TILE_SIZE), int((mouse_pos[1] + self.__camera.get_y())//config.TILE_SIZE))
+
+        if not self.__is_in_interaction_range(tile_coordinates):
+            self.reset_mining()
+            return
         
         chunk_coordinates = self.__world.which_chunk(tile_coordinates)
         coordinates_in_chunk = self.__world.where_in_chunk(tile_coordinates)
