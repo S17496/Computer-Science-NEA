@@ -54,6 +54,10 @@ class Tree(StaticEntity):
         self.__dimensions = (2,10)
 
 
+    def get_dimensions(self) -> tuple:
+        return self.__dimensions
+
+
 class Sapling(StaticEntity):
 
     def __init__(self, x: int, y: int, image: str) -> None:
@@ -82,6 +86,7 @@ class ItemEntity(Entity):
     # Constructor
     def __init__(self, x: int, y: int, image: str, item) -> None:
         super().__init__(x, y, image)
+        self.__time = 0
         self.__item = item
         self.__vel_y = 0
         self.__gravity = config.GRAVITY
@@ -111,6 +116,10 @@ class ItemEntity(Entity):
             if item_entity is self:
                 continue
 
+            merge_range = config.ITEM_ENTITY_MERGE_RANGE * config.TILE_SIZE
+            if abs(self.rect.centerx - item_entity.rect.centerx) > merge_range or abs(self.rect.centery - item_entity.rect.centery) > merge_range:
+                continue
+
             item = item_entity.get_item()
             total = self.__item.get_quantity() + item.get_quantity()
 
@@ -118,9 +127,11 @@ class ItemEntity(Entity):
                 item.set_quantity(total)
                 self.__item.set_quantity(0)
 
-        # Delete dropped items with no item
-        if self.__item.get_quantity() == 0:
+        # Despawn items
+        if self.__item.get_quantity() == 0 or self.__time >= config.DESPAWN_ITEM_TIME:
             self.kill()
+
+        self.__time += 1
 
 
 

@@ -120,7 +120,7 @@ class Game:
         with open("data/items.json", "r") as tile_data:
             tile_data = json.load(tile_data)
 
-        tile_item_entity = entities.ItemEntity(tile_coordinates[0] * config.TILE_SIZE,tile_coordinates[1] * config.TILE_SIZE,tile_data[item_id]["texture"],items.TileItem(item_id, 1))
+        tile_item_entity = entities.ItemEntity(tile_coordinates[0], tile_coordinates[1], tile_data[item_id]["texture"],items.TileItem(item_id, 1))
         self.__item_entities.add(tile_item_entity)
 
 

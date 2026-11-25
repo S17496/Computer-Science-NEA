@@ -422,23 +422,7 @@ class World:
 
     # ENTITIES
 
-    def __add_static_entity(self, entity, world_coordinates: tuple) -> bool:
-        
-        width, height = entity.get_dimensions()
-        world_x, world_y = world_coordinates
 
-        for x in range(width):
-            for y in range(height):
-
-                chunk_coordinates = self.which_chunk((world_x + x, world_y + y))
-                coordinates_in_chunk = self.where_in_chunk((world_x + x, world_y + y))
-
-                chunk = self.__get_or_generate_chunk(chunk_coordinates)
-
-                if chunk.get_tile_id(coordinates_in_chunk) != -1:
-                    return False
-
-        self.__static_entities.append(entity)
 
 
     def __update_static_entities(self, screen, camera) -> None:

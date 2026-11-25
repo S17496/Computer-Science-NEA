@@ -1,6 +1,7 @@
 import pygame
 import items
 import config
+import random
 
 
 
@@ -30,7 +31,7 @@ class EventHandler:
         distance_x = player_center[0] - tile_center[0]
         distance_y = player_center[1] - tile_center[1]
         interaction_range = config.TILE_INTERACTION_RANGE * config.TILE_SIZE
-        return distance_x ** 2 + distance_y ** 2 <= interaction_range ** 2
+        return abs(distance_x) <= interaction_range and abs(distance_y) <= interaction_range
 
     def handle_slot_switching(self, event) -> None:
         slot_num = (event.key - 39) % 10
@@ -154,7 +155,9 @@ class EventHandler:
         elapsed = pygame.time.get_ticks() - self.__break_start
             
         if elapsed >= break_time and self.__break_target != None:
-            self.__drop_tile(tile_coordinates, item_id)
+            tile_item_x = random.randint(tile_coordinates[0] * config.TILE_SIZE, tile_coordinates[0] * config.TILE_SIZE + config.TILE_SIZE - config.ITEM_SIZE)
+            tile_item_y = random.randint(tile_coordinates[1] * config.TILE_SIZE, tile_coordinates[1] * config.TILE_SIZE + config.TILE_SIZE - config.ITEM_SIZE)
+            self.__drop_tile((tile_item_x, tile_item_y), item_id)
             self.__world.break_tile(tile_coordinates)
             self.reset_mining()
 
