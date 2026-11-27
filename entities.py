@@ -137,8 +137,17 @@ class ItemEntity(Entity):
 
 class Enemy(Entity):
 
-    def __init__(self, x: int, y: int, image: str) -> None:
+    def __init__(self, x: int, y: int, image: str, aggro_distance) -> None:
         super().__init__(x, y, image)
+        self.__aggro_distance = aggro_distance
+
+
+    def within_range(self, player_rect) -> bool:
+
+        if (self.rect.x - player_rect.x) ** 2 + (self.rect.y - player_rect.y) ** 2 > self.__aggro_distance ** 2:
+            return False 
+
+        return True
 
 
     def update(self) -> None:
@@ -151,13 +160,14 @@ class Enemy(Entity):
 
 
 class Zombie(Enemy):
-    def __init__(self, x: int, y: int, image: str) -> None:
-        super().__init__(x, y, image)
+    def __init__(self, x: int, y: int, image: str, aggro_distance = config.TILE_SIZE * 20) -> None:
+        super().__init__(x, y, image, aggro_distance)
         self.__speed = 1
         self.__jump_strength = -14
         self.__on_ground = False
         self.__vel_y = 0
-        self.__aggro_distance = config.TILE_SIZE * 20
+        self.__idle = True
+
 
 
     def update(self, player_rect: pygame.Rect, tiles: list) -> None:
@@ -179,6 +189,7 @@ class Zombie(Enemy):
 
         if player_distance < 0:
             return self.__move_left(tiles)
+            
 
 
     def __move_right(self, tiles) -> None:

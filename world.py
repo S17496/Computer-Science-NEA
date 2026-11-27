@@ -3,6 +3,7 @@ import config
 import math
 import random
 import json
+import entities
 
 
 class PerlinNoise:
@@ -197,6 +198,7 @@ class World:
         self.__chunk_queue = []
 
         self.__static_entities = []
+        self.__enemies = []
 
 
     # CHUNK GENERATION
@@ -422,7 +424,26 @@ class World:
 
     # ENTITIES
 
+    def __spawn_enemies(self, rect) -> bool:
 
+        chunk_coordinates = self.which_chunk((rect.x // config.TILE_SIZE, rect.y // config.TILE_SIZE))
+
+        if len(self.__enemies) > 10:
+            return
+
+        if random.randint(1, 50) == 1 and self.__get_or_generate_chunk(chunk_coordinates).is_cavern():
+            enemy = ...
+
+
+    def __despawn_enemies(self, rect) -> None:
+
+        enemy_x, enemy_y = (enemy.rect.x // config.TILE_SIZE, enemy.rect.y // config.TILE_SIZE)
+        player_x, player_y = (rect.x // config.TILE_SIZE, rect.y // config.TILE_SIZE)
+
+        for enemy in self.__enemies:
+
+            if (enemy_x - player_x) ** 2 + (enemy_y - player_y) ** 2 > config.ENEMY_DESPAWN_RADIUS ** 3:
+                self.__enemies.remove(enemy)
 
 
     def __update_static_entities(self, screen, camera) -> None:
@@ -446,7 +467,6 @@ class World:
 
         self.__chunk_queue.append(chunk_coordinates)
 
-        print("queued:", chunk_coordinates)
 
 
     def process_chunk_queue(self, rect, maximum_chunks: int) -> None:
@@ -467,11 +487,6 @@ class World:
 
             if chunk_coordinates not in self.__chunks:
                 self.__chunks[chunk_coordinates] = self.__generate_chunk(chunk_coordinates)
-
-            print(
-            "player chunk:", (rect_x, rect_y),
-            "generated:", chunk_coordinates,
-            "loaded:", len(self.__chunks))
 
 
     def queue_nearby_chunks(self, rect) -> None:
