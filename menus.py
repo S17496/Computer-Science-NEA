@@ -201,7 +201,7 @@ class MainMenu:
 
         self.__set_state_play()
 
-        return player.Player(16 * 16 * 10, 400, "player.png")
+        return player.Player(16 * 16 * 10, 400, "assets/entities/player.png")
 
 
     def __select_size(self, size, name_box, seed_box) -> None:

@@ -90,7 +90,7 @@ class PerlinNoise:
 
 
 class Chunk:
-    def __init__(self, coordinates: tuple, tiles: list | None = None, modified: bool = False) -> None:
+    def __init__(self, coordinates: tuple, is_cavern: bool = False, tiles: list | None = None, modified: bool = False) -> None:
 
         if tiles is None:
             tiles = [[-1 for _ in range(config.CHUNK_SIZE)]for _ in range(config.CHUNK_SIZE)]
@@ -98,6 +98,8 @@ class Chunk:
         self.__tiles = tiles
 
         self.__coordinates = coordinates
+
+        self.__is_cavern = is_cavern
 
         self.__dirty = True
 
@@ -172,6 +174,10 @@ class Chunk:
         return [row[:] for row in self.__tiles]
 
 
+    def is_cavern(self) -> bool:
+        return self.__is_cavern
+
+
 class World:
     # CONSTRUCTOR
 
@@ -206,7 +212,8 @@ class World:
     def __generate_chunk(self, chunk_coordinates: tuple) -> Chunk:
 
         chunk_x, chunk_y = chunk_coordinates
-        chunk = Chunk(chunk_coordinates)
+
+        chunk = Chunk(chunk_coordinates, chunk_y >= self.__dimensions[1] // 2 * config.CHUNK_SIZE)
 
         for x in range(config.CHUNK_SIZE):
             world_x = chunk_x * config.CHUNK_SIZE + x 
@@ -260,10 +267,12 @@ class World:
     # CHUNK LIFECYCLE
 
     def update(self, player_rect, maximum_chunks: int = 1) -> None:
-        """Keep the chunks around the player loaded and remove distant ones."""
+        """Handles world updates."""
         self.queue_nearby_chunks(player_rect)
         self.process_chunk_queue(player_rect, maximum_chunks)
         self.unload_far_chunks(player_rect)
+        self.__spawn_enemies(player_rect)
+        self.__despawn_enemies(player_rect)
 
 
     def unload_far_chunks(self, player_rect) -> None:
@@ -432,18 +441,25 @@ class World:
             return
 
         if random.randint(1, 50) == 1 and self.__get_or_generate_chunk(chunk_coordinates).is_cavern():
-            enemy = ...
+            self.__enemies.append(entities.Zombie(rect.x, rect.y))
 
 
     def __despawn_enemies(self, rect) -> None:
 
-        enemy_x, enemy_y = (enemy.rect.x // config.TILE_SIZE, enemy.rect.y // config.TILE_SIZE)
         player_x, player_y = (rect.x // config.TILE_SIZE, rect.y // config.TILE_SIZE)
 
         for enemy in self.__enemies:
 
+            enemy_x, enemy_y = (enemy.rect.x // config.TILE_SIZE, enemy.rect.y // config.TILE_SIZE)
+
             if (enemy_x - player_x) ** 2 + (enemy_y - player_y) ** 2 > config.ENEMY_DESPAWN_RADIUS ** 3:
                 self.__enemies.remove(enemy)
+
+
+    def __update_enemies(self) -> None:
+
+        for enemy in self.__enemies:
+            enemy.update()
 
 
     def __update_static_entities(self, screen, camera) -> None:
@@ -466,7 +482,6 @@ class World:
             return
 
         self.__chunk_queue.append(chunk_coordinates)
-
 
 
     def process_chunk_queue(self, rect, maximum_chunks: int) -> None:
@@ -600,6 +615,9 @@ class World:
     def get_dimensions(self) -> tuple:
         return self.__dimensions
 
+    def get_enemies(self) -> list:
+        return self.__enemies
+
     # SAVING AND LOADING
 
     def save_world(self) -> None:
@@ -642,7 +660,7 @@ class World:
 
         for key, tiles in data.get("chunks", {}).items():
             x, y = map(int, key.split(","))
-            chunk = Chunk((x, y), tiles, True)
+            chunk = Chunk((x, y), y >= self.__dimensions[1] // 2, tiles, True)
             chunks[(x, y)] = chunk
 
         return chunks
@@ -655,7 +673,7 @@ class World:
             return config.SMALL_WORLD
         
         if size == "medium":
-                    return config.MEDIUM_WORLD
+            return config.MEDIUM_WORLD
         
         else:
             return config.LARGE_WORLD

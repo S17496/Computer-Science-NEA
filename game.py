@@ -59,7 +59,7 @@ class Game:
                 self.__player = self.__menu.select_player_menu()
 
             elif menu_state == "play" and self.__player is not None and self.__world is not None:
-                self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, self.drop_tile, self.drop_item, self.__inventory_ui, self.__crafting_ui, self.__crafting)
+                self.__event_handler = events.EventHandler(self.__player, self.__world, self.__camera, self.__drop_tile, self.__drop_item, self.__inventory_ui, self.__crafting_ui, self.__crafting)
                 self.play()
                 self.__world.save_world()
                 return
@@ -103,6 +103,7 @@ class Game:
             self.__world.render_world(self.__player.rect, self.__screen, self.__camera)
 
             self.__screen.blit(self.__player.image, (self.__player.rect.x - self.__camera.get_x(), self.__player.rect.y - self.__camera.get_y()))
+            self.__update_enemies()
 
             self.__inventory_ui.render_inventory(self.__screen, self.__player.get_inventory().get_items(), self.__player.get_inventory().get_selected_slot())
             self.__inventory_ui.render_hand_item(self.__screen, self.__player.get_hand())
@@ -115,7 +116,7 @@ class Game:
             self.__clock.tick(60)
 
 
-    def drop_tile(self, tile_coordinates: tuple, item_id: str) -> None:
+    def __drop_tile(self, tile_coordinates: tuple, item_id: str) -> None:
 
         with open("data/items.json", "r") as tile_data:
             tile_data = json.load(tile_data)
@@ -124,7 +125,16 @@ class Game:
         self.__item_entities.add(tile_item_entity)
 
 
-    def drop_item(self, x: int, y: int, item: items.Item) -> None:
+    def __drop_item(self, x: int, y: int, item: items.Item) -> None:
         
         item_entity = entities.ItemEntity(x, y, item.get_texture(), item)
         self.__item_entities.add(item_entity)
+
+
+    def __update_enemies(self) -> None:
+        """Calls every enemy's update method and draws them to them screen."""
+
+        for enemy in self.__world.get_enemies():
+            enemy.update(self.__player.rect, self.__world.get_nearby_rects(enemy.rect, 10, 10))
+            self.__screen.blit(enemy.image, (enemy.rect.x - self.__camera.get_x(), enemy.rect.y - self.__camera.get_y()))
+            

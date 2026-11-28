@@ -1,6 +1,7 @@
 import pygame
 import random 
 import config
+import math
 
 
 class Entity(pygame.sprite.Sprite):
@@ -139,7 +140,7 @@ class Enemy(Entity):
 
     def __init__(self, x: int, y: int, image: str, aggro_distance) -> None:
         super().__init__(x, y, image)
-        self.__aggro_distance = aggro_distance
+        self._aggro_distance = aggro_distance
 
 
     def within_range(self, player_rect) -> bool:
@@ -160,7 +161,7 @@ class Enemy(Entity):
 
 
 class Zombie(Enemy):
-    def __init__(self, x: int, y: int, image: str, aggro_distance = config.TILE_SIZE * 20) -> None:
+    def __init__(self, x: int, y: int, image: str = "assets/entities/zombie.png", aggro_distance = config.TILE_SIZE * 20) -> None:
         super().__init__(x, y, image, aggro_distance)
         self.__speed = 1
         self.__jump_strength = -14
@@ -181,7 +182,7 @@ class Zombie(Enemy):
 
         player_distance = player_rect.x - self.rect.x
 
-        if player_distance > self.__aggro_distance:
+        if player_distance > self._aggro_distance:
             return
 
         if player_distance > 0:
@@ -193,7 +194,6 @@ class Zombie(Enemy):
 
 
     def __move_right(self, tiles) -> None:
-        """Zombie moves right and jumps if collision occurs"""
 
         for _ in range(int(self.__speed)):
 
@@ -204,12 +204,9 @@ class Zombie(Enemy):
 
                     self.rect.right = rect.left
 
-                    self.__vel_y = self.__jump_strength
-                    self.__on_ground = False
 
 
     def __move_left(self, tiles) -> None:
-        """Zombie moves left and jumps if collision occurs."""
 
         for _ in range(int(self.__speed)):
 
@@ -220,9 +217,12 @@ class Zombie(Enemy):
 
                     self.rect.left = rect.right
 
-                    if self.__on_ground:
-                        self.__vel_y = self.__jump_strength
-                        self.__on_ground = False
+
+    def __jump(self) -> None:
+
+        if self.__on_ground:
+            self.__vel_y = self.__jump_strength
+            self.__on_ground = False
 
 
     def __vertical_motion(self, tiles) -> None:
@@ -244,9 +244,26 @@ class Zombie(Enemy):
                         self.rect.bottom = rect.top
                         self.__on_ground = True
                         self.__vel_y = 0
+                        return
 
                     elif self.__vel_y < 0:
                         self.rect.top = rect.bottom
 
         self.__vel_y += config.GRAVITY
-            
+
+
+class Bat(Enemy):
+
+    def __init__(self, x: int, y: int, image: str = "assets/entities/bat.png", aggro_distance = config.TILE_SIZE * 20) -> None:
+        super().__init__(x, y, image, aggro_distance)
+        self.__speed = 1
+        self.__angle = 0
+
+    def __move(self) -> None:
+        
+
+    
+
+
+class Worm(Enemy):
+    pass
